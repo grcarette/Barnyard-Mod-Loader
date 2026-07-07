@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UCHModLoader.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eca4878a289efe4e00e46cf6c0c8648e29f01a24")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d39d99d39a1c41bbd1df95dfeae9d052e1371259")]
 [assembly: System.Reflection.AssemblyProductAttribute("UCHModLoader.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UCHModLoader.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

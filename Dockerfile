@@ -6,6 +6,6 @@ RUN dotnet publish UCHModLoader.Server/UCHModLoader.Server.csproj -c Release -o 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app .
-# Railway injects PORT; bind to it on all interfaces.
-ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
-ENTRYPOINT ["dotnet", "UCHModLoader.Server.dll"]
+# PORT is injected by Railway at runtime; resolve it at container start,
+# not at image build. Falls back to 8080 for local docker runs.
+ENTRYPOINT ["/bin/sh", "-c", "ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8080} exec dotnet UCHModLoader.Server.dll"]
