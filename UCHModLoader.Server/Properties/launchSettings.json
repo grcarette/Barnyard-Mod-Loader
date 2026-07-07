@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "UCHModLoader.Server": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

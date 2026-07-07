@@ -1,0 +1,572 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\views\\mainwindow.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\views\\mainwindow.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\viewmodels\\modpackviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\viewmodels\\modpackviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\viewmodels\\uploadviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\viewmodels\\uploadviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\viewmodels\\modrowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\viewmodels\\modrowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\services\\documents.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\services\\documents.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\views\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\views\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\services\\appsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\services\\appsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\steamgamelocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\steamgamelocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\installmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\installmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\interfaces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\interfaces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\bepinexmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\bepinexmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\urlopener.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\urlopener.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\app.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\app.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\githubmodrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\githubmodrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\services\\iconprocessor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\services\\iconprocessor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\modtags.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\modtags.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\modnaming.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\modnaming.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\grcar\\AppData\\Roaming\\Microsoft\\UserSecrets\\1c8ff8f4-d889-4ef8-862c-8d87fa022524\\secrets.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\uchmodloader.app.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\uchmodloader.app.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\services\\mockmodrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\services\\mockmodrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\services\\profileservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\services\\profileservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\viewmodels\\profilerowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\viewmodels\\profilerowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\services\\mongocontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\services\\mongocontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\services\\iconcache.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\services\\iconcache.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.app\\uchmodloader.app.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2B222222-2222-2222-2222-222222222222}|UCHModLoader.App\\UCHModLoader.App.csproj|solutionrelative:uchmodloader.app\\uchmodloader.app.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\services\\dllinspector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\services\\dllinspector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.server\\uchmodloader.server.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{3C333333-3333-3333-3333-333333333333}|UCHModLoader.Server\\UCHModLoader.Server.csproj|solutionrelative:uchmodloader.server\\uchmodloader.server.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|c:\\users\\grcar\\source\\repos\\uchmodloader\\uchmodloader.core\\uchmodloader.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{1A111111-1111-1111-1111-111111111111}|UCHModLoader.Core\\UCHModLoader.Core.csproj|solutionrelative:uchmodloader.core\\uchmodloader.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ModRowViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ModRowViewModel.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\ViewModels\\ModRowViewModel.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ModRowViewModel.cs",
+              "RelativeToolTip": "UCHModLoader.App\\ViewModels\\ModRowViewModel.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAA6wEUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:45:30.932Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "UploadViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\UploadViewModel.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\ViewModels\\UploadViewModel.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\UploadViewModel.cs",
+              "RelativeToolTip": "UCHModLoader.App\\ViewModels\\UploadViewModel.cs",
+              "ViewState": "AgIAADwDAAAAAAAAAAAqwHYDAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:06:31.924Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindowViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\ViewModels\\MainWindowViewModel.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeToolTip": "UCHModLoader.App\\ViewModels\\MainWindowViewModel.cs",
+              "ViewState": "AgIAAEwEAAAAAAAAAAAqwIYEAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:14:09.46Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MainWindow.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Views\\MainWindow.axaml.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Views\\MainWindow.axaml.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Views\\MainWindow.axaml.cs",
+              "RelativeToolTip": "UCHModLoader.App\\Views\\MainWindow.axaml.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAqwEoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:30:27.924Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.axaml",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Views\\MainWindow.axaml",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Views\\MainWindow.axaml",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Views\\MainWindow.axaml",
+              "RelativeToolTip": "UCHModLoader.App\\Views\\MainWindow.axaml",
+              "ViewState": "AgIAALcDAAAAAAAAAAAjwM4DAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-07-06T20:52:53.674Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Program.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\Program.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Program.cs",
+              "RelativeToolTip": "UCHModLoader.Server\\Program.cs",
+              "ViewState": "AgIAAMYDAAAAAAAAAAAqwAAEAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:05:28.53Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Documents.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\Documents.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\Services\\Documents.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\Documents.cs",
+              "RelativeToolTip": "UCHModLoader.Server\\Services\\Documents.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAqwEAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:43:53.666Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Models.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Models\\Models.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Models\\Models.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Models\\Models.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Models\\Models.cs",
+              "ViewState": "AgIAAEgAAAAAAAAAAAA6wIIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:45:04.693Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ModPackViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ModPackViewModel.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\ViewModels\\ModPackViewModel.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ModPackViewModel.cs",
+              "RelativeToolTip": "UCHModLoader.App\\ViewModels\\ModPackViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:55:45.878Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "AppSettings.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\AppSettings.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Services\\AppSettings.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\AppSettings.cs",
+              "RelativeToolTip": "UCHModLoader.App\\Services\\AppSettings.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:05:14.494Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "SteamGameLocator.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\SteamGameLocator.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\SteamGameLocator.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\SteamGameLocator.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\SteamGameLocator.cs",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAqwJQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T03:25:57.618Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "InstallManager.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\InstallManager.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\InstallManager.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\InstallManager.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\InstallManager.cs",
+              "ViewState": "AgIAAPwAAAAAAAAAAAAqwDYBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:45:17.377Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Interfaces.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Interfaces.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Interfaces.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Interfaces.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Interfaces.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:56:12.117Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "BepInExManager.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\BepInExManager.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\BepInExManager.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\BepInExManager.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\BepInExManager.cs",
+              "ViewState": "AgIAAFUAAAAAAAAAAAAqwI8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T02:50:23.462Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "UrlOpener.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\UrlOpener.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\UrlOpener.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\UrlOpener.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\UrlOpener.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T03:26:14.694Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "App.axaml",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\App.axaml",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\App.axaml",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\App.axaml",
+              "RelativeToolTip": "UCHModLoader.App\\App.axaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-07-07T00:57:19.397Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "App.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\App.axaml.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\App.axaml.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\App.axaml.cs",
+              "RelativeToolTip": "UCHModLoader.App\\App.axaml.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAqwEEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:59:12.341Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "GitHubModRepository.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\GitHubModRepository.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\GitHubModRepository.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\GitHubModRepository.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\GitHubModRepository.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAA6wEgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:56:18.369Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "IconProcessor.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\IconProcessor.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\Services\\IconProcessor.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\IconProcessor.cs",
+              "RelativeToolTip": "UCHModLoader.Server\\Services\\IconProcessor.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T23:02:26.324Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "ModTags.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\ModTags.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\ModTags.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\ModTags.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\ModTags.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:38:29.292Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "ModNaming.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\ModNaming.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\ModNaming.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\ModNaming.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\ModNaming.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T23:20:00.477Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "secrets.json",
+              "DocumentMoniker": "C:\\Users\\grcar\\AppData\\Roaming\\Microsoft\\UserSecrets\\1c8ff8f4-d889-4ef8-862c-8d87fa022524\\secrets.json",
+              "RelativeDocumentMoniker": "..\\..\\..\\AppData\\Roaming\\Microsoft\\UserSecrets\\1c8ff8f4-d889-4ef8-862c-8d87fa022524\\secrets.json",
+              "ToolTip": "C:\\Users\\grcar\\AppData\\Roaming\\Microsoft\\UserSecrets\\1c8ff8f4-d889-4ef8-862c-8d87fa022524\\secrets.json",
+              "RelativeToolTip": "..\\..\\..\\AppData\\Roaming\\Microsoft\\UserSecrets\\1c8ff8f4-d889-4ef8-862c-8d87fa022524\\secrets.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-06T21:38:39.21Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "ProfileService.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\ProfileService.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Services\\ProfileService.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\ProfileService.cs",
+              "RelativeToolTip": "UCHModLoader.App\\Services\\ProfileService.cs",
+              "ViewState": "AgIAADcAAAAAAAAAAAAIwEsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:55:16.032Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "UCHModLoader.App",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\UCHModLoader.App.csproj",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\UCHModLoader.App.csproj",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\UCHModLoader.App.csproj",
+              "RelativeToolTip": "UCHModLoader.App\\UCHModLoader.App.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-07-07T01:18:16.98Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "MockModRepository.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\MockModRepository.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Services\\MockModRepository.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\MockModRepository.cs",
+              "RelativeToolTip": "UCHModLoader.App\\Services\\MockModRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:56:38.333Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "ProfileRowViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ProfileRowViewModel.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\ViewModels\\ProfileRowViewModel.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\ViewModels\\ProfileRowViewModel.cs",
+              "RelativeToolTip": "UCHModLoader.App\\ViewModels\\ProfileRowViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:55:33.552Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "MongoContext.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\MongoContext.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\Services\\MongoContext.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\Services\\MongoContext.cs",
+              "RelativeToolTip": "UCHModLoader.Server\\Services\\MongoContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:56:49.29Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "IconCache.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\IconCache.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\Services\\IconCache.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\Services\\IconCache.cs",
+              "RelativeToolTip": "UCHModLoader.App\\Services\\IconCache.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAAqwE0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T00:45:40.884Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "UCHModLoader.App.csproj",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\UCHModLoader.App.csproj",
+              "RelativeDocumentMoniker": "UCHModLoader.App\\UCHModLoader.App.csproj",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.App\\UCHModLoader.App.csproj",
+              "RelativeToolTip": "UCHModLoader.App\\UCHModLoader.App.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-07-06T21:35:55.072Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "UCHModLoader.Core.csproj",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\UCHModLoader.Core.csproj",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\UCHModLoader.Core.csproj",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\UCHModLoader.Core.csproj",
+              "RelativeToolTip": "UCHModLoader.Core\\UCHModLoader.Core.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-07-06T21:36:11.474Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\appsettings.json",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\appsettings.json",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\appsettings.json",
+              "RelativeToolTip": "UCHModLoader.Server\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-06T20:44:37.666Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "DllInspector.cs",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\DllInspector.cs",
+              "RelativeDocumentMoniker": "UCHModLoader.Core\\Services\\DllInspector.cs",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Core\\Services\\DllInspector.cs",
+              "RelativeToolTip": "UCHModLoader.Core\\Services\\DllInspector.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-06T22:26:12.42Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "UCHModLoader.Server.csproj",
+              "DocumentMoniker": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\UCHModLoader.Server.csproj",
+              "RelativeDocumentMoniker": "UCHModLoader.Server\\UCHModLoader.Server.csproj",
+              "ToolTip": "C:\\Users\\grcar\\source\\repos\\UCHModLoader\\UCHModLoader.Server\\UCHModLoader.Server.csproj",
+              "RelativeToolTip": "UCHModLoader.Server\\UCHModLoader.Server.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-07-06T20:52:01.414Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

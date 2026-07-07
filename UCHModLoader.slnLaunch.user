@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "UCHModLoader.Server\\UCHModLoader.Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "UCHModLoader.App\\UCHModLoader.App.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

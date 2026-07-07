@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "mods": [
+    {
+      "id": "UCHLib",
+      "name": "UCHLib",
+      "author": "modteam",
+      "description": "Shared library used by other mods",
+      "versions": [
+        {
+          "version": "1.3.0",
+          "downloadUrl": "https://github.com/you/UCHLib/releases/download/v1.3.0/UCHLib-1.3.0.zip",
+          "dependencies": {},
+          "gameVersion": "*"
+        }
+      ]
+    },
+    {
+      "id": "ExampleMod",
+      "name": "Example Mod",
+      "author": "you",
+      "description": "Replace with a real mod",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "downloadUrl": "https://github.com/you/ExampleMod/releases/download/v1.0.0/ExampleMod-1.0.0.zip",
+          "dependencies": { "UCHLib": ">=1.3.0" },
+          "gameVersion": "*"
+        }
+      ]
+    }
+  ]
+}

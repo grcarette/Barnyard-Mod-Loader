@@ -1,0 +1,981 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UCHModLoader.App.ViewModels"
+        x:Class="UCHModLoader.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Barnyard"
+        Width="860" Height="560"
+        MinWidth="720" MinHeight="420">
+
+	<Panel>
+
+		<DockPanel>
+
+			<!-- Header: profile (left) and launch (right), visible on every page -->
+			<Border DockPanel.Dock="Top"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+					BorderThickness="0,0,0,1" Padding="8,8,12,8">
+				<DockPanel>
+					<Button DockPanel.Dock="Right" Content="Launch game" Classes="accent"
+							VerticalAlignment="Center"
+							Command="{Binding LaunchGameCommand}"/>
+					<Button DockPanel.Dock="Left" Width="164" Height="48" Margin="0,0,16,0"
+							VerticalAlignment="Center" HorizontalContentAlignment="Center"
+							Content="Log in with Discord" FontSize="12"
+							IsVisible="{Binding Upload.IsLoggedIn, Converter={x:Static BoolConverters.Not}}"
+							Command="{Binding Upload.LoginWithDiscordCommand}"/>
+					<Button DockPanel.Dock="Left" Width="164" Height="48" Margin="0,0,16,0"
+							VerticalAlignment="Center" Padding="10,4"
+							HorizontalContentAlignment="Left"
+							IsVisible="{Binding Upload.IsLoggedIn}">
+						<Button.Flyout>
+							<MenuFlyout Placement="BottomEdgeAlignedLeft">
+								<MenuItem Header="Log out" Foreground="Red"
+										  Command="{Binding Upload.LogOutCommand}"/>
+							</MenuFlyout>
+						</Button.Flyout>
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<Border Width="28" Height="28" CornerRadius="14" ClipToBounds="True"
+									VerticalAlignment="Center"
+									Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+								<Image Source="{Binding Upload.Avatar}" Stretch="UniformToFill"/>
+							</Border>
+							<TextBlock Text="{Binding Upload.CurrentUsername}" FontSize="13"
+									   VerticalAlignment="Center" MaxWidth="110"
+									   TextTrimming="CharacterEllipsis"/>
+						</StackPanel>
+					</Button>
+					<Button HorizontalAlignment="Left" Padding="10,4" Height="48"
+							Command="{Binding SelectTabCommand}" CommandParameter="Profiles">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<StackPanel Spacing="1">
+								<TextBlock Text="{Binding ActiveProfileName}" FontSize="15" FontWeight="Medium"
+										   TextTrimming="CharacterEllipsis" MaxWidth="260"/>
+								<TextBlock Text="Profile · click to manage" FontSize="10" Opacity="0.5"/>
+							</StackPanel>
+						</StackPanel>
+					</Button>
+				</DockPanel>
+			</Border>
+
+			<!-- Sidebar -->
+			<Border DockPanel.Dock="Left" Width="180"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+					BorderThickness="0,0,1,0">
+				<DockPanel Margin="8">
+					<StackPanel DockPanel.Dock="Bottom" Margin="4,8" Spacing="4">
+						<StackPanel Orientation="Horizontal" Spacing="6">
+							<Ellipse Width="8" Height="8" Fill="Green" IsVisible="{Binding GameFound}"/>
+							<Ellipse Width="8" Height="8" Fill="Gray"
+									 IsVisible="{Binding GameFound, Converter={x:Static BoolConverters.Not}}"/>
+							<TextBlock Text="{Binding GameStatus}" FontSize="12"/>
+						</StackPanel>
+						<TextBlock Text="{Binding BepInExStatus}" FontSize="11" Opacity="0.6"/>
+					</StackPanel>
+
+					<StackPanel Spacing="4">
+						<Button Content="Installed" HorizontalAlignment="Stretch"
+								Command="{Binding SelectTabCommand}" CommandParameter="Installed"/>
+						<Button Content="Browse mods" HorizontalAlignment="Stretch"
+								Command="{Binding SelectTabCommand}" CommandParameter="Browse"/>
+						<Button Content="Upload mod" HorizontalAlignment="Stretch"
+								Command="{Binding SelectTabCommand}" CommandParameter="Upload"/>
+						<Button Content="Settings" HorizontalAlignment="Stretch"
+								Command="{Binding SelectTabCommand}" CommandParameter="Settings"/>
+					</StackPanel>
+				</DockPanel>
+			</Border>
+
+			<!-- Status bar -->
+			<Border DockPanel.Dock="Bottom"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+					BorderThickness="0,1,0,0" Padding="12,6">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Right" Text="{Binding GamePath}" FontSize="11" Opacity="0.5"/>
+					<TextBlock Text="{Binding StatusMessage}" FontSize="12"/>
+				</DockPanel>
+			</Border>
+
+			<!-- Main content -->
+			<Panel Margin="16">
+
+				<!-- Installed tab -->
+				<DockPanel IsVisible="{Binding IsInstalledTab}">
+					<TextBlock DockPanel.Dock="Top" FontSize="18" Margin="0,0,0,10">
+						<Run Text="Profile - "/>
+						<Run Text="{Binding ActiveProfileName}"/>
+					</TextBlock>
+					<DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+							<Button Content="Check updates" Command="{Binding CheckUpdatesCommand}"/>
+							<Button Content="Update all" Command="{Binding UpdateAllCommand}"/>
+							<Button Content="{Binding InstalledViewButtonText}" Width="150"
+									HorizontalContentAlignment="Center"
+									Command="{Binding ToggleInstalledViewCommand}"/>
+						</StackPanel>
+						<TextBox Watermark="Search installed mods" Text="{Binding SearchText}"
+								 Margin="0,0,12,0"/>
+					</DockPanel>
+
+					<ScrollViewer>
+						<ItemsControl ItemsSource="{Binding DisplayedInstalledMods}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:ModRowViewModel">
+									<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											BorderThickness="0,0,0,1" Padding="8,10">
+										<StackPanel Spacing="6">
+											<DockPanel>
+												<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="10"
+															VerticalAlignment="Center">
+													<Border IsVisible="{Binding UpdateAvailable}" CornerRadius="10"
+															Background="{DynamicResource SystemAccentColor}" Padding="8,2">
+														<TextBlock FontSize="11" Foreground="White">
+															<Run Text="Update"/>
+															<Run Text="{Binding LatestVersion}"/>
+														</TextBlock>
+													</Border>
+													<ToggleSwitch IsChecked="{Binding IsEnabled, Mode=OneWay}"
+																  Command="{Binding $parent[Window].DataContext.ToggleModCommand}"
+																  CommandParameter="{Binding}"
+																  OnContent="" OffContent=""/>
+													<Button Content="Uninstall" FontSize="12"
+															IsEnabled="{Binding IsLockedDependency, Converter={x:Static BoolConverters.Not}}"
+															Command="{Binding $parent[Window].DataContext.UninstallModCommand}"
+															CommandParameter="{Binding}"/>
+												</StackPanel>
+												<Button Background="Transparent" BorderThickness="0" Padding="0"
+														HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+														Command="{Binding $parent[Window].DataContext.ToggleExpandCommand}"
+														CommandParameter="{Binding}">
+													<StackPanel Orientation="Horizontal" Spacing="10">
+														<Border Width="36" Height="36" CornerRadius="6" ClipToBounds="True"
+																VerticalAlignment="Center"
+																Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+															<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+														</Border>
+														<StackPanel VerticalAlignment="Center" Spacing="2">
+															<StackPanel Orientation="Horizontal" Spacing="6">
+																<TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+																<TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="12"
+																		   VerticalAlignment="Center"/>
+															</StackPanel>
+															<TextBlock Text="Click for details" FontSize="11" Opacity="0.4"
+																	   IsVisible="{Binding IsExpanded, Converter={x:Static BoolConverters.Not}}"/>
+														</StackPanel>
+													</StackPanel>
+												</Button>
+											</DockPanel>
+											<TextBlock Text="{Binding Description}" FontSize="12" Opacity="0.7"
+													   TextWrapping="Wrap" Margin="46,0,0,0"
+													   IsVisible="{Binding IsExpanded}"/>
+										</StackPanel>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</ScrollViewer>
+				</DockPanel>
+
+				<!-- Browse tab: grid of mod cards -->
+				<DockPanel IsVisible="{Binding IsBrowseGridVisible}">
+					<DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+							<ComboBox ItemsSource="{Binding TagFilterOptions}"
+									  SelectedItem="{Binding SelectedTagFilter}" MinWidth="104"/>
+							<ComboBox ItemsSource="{Binding SortOptions}"
+									  SelectedItem="{Binding SelectedSortOption}" MinWidth="124"/>
+							<Button Content="Download Private Mod" FontSize="12" Height="32" Width="170"
+									VerticalAlignment="Center" VerticalContentAlignment="Center"
+									HorizontalContentAlignment="Center">
+								<Button.Flyout>
+									<Flyout Placement="BottomEdgeAlignedRight">
+										<StackPanel Spacing="8" Width="240">
+											<TextBlock Text="Enter your access key" FontSize="12"/>
+											<TextBox Watermark="XXXX-XXXX-XXXX-XXXX"
+													 Text="{Binding PrivateKeyInput}"/>
+											<Button Content="Redeem" HorizontalAlignment="Right" FontSize="12"
+													Command="{Binding RedeemKeyCommand}"/>
+											<TextBlock Text="Keys are one-time use and grant permanent access to your Discord account."
+													   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+										</StackPanel>
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+						</StackPanel>
+						<TextBox Watermark="Search available mods" Margin="0,0,6,0"
+								 Text="{Binding BrowseSearchText}"/>
+					</DockPanel>
+					<ScrollViewer>
+						<StackPanel>
+							<StackPanel IsVisible="{Binding HasPacks}" Spacing="8" Margin="0,0,0,14">
+								<TextBlock Text="Mod packs" FontSize="15" FontWeight="Medium" Margin="6,0,0,0"/>
+								<ItemsControl ItemsSource="{Binding Packs}">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<WrapPanel/>
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:ModPackViewModel">
+											<Button Width="196" Height="240" Margin="6" Padding="0"
+													HorizontalContentAlignment="Stretch"
+													VerticalContentAlignment="Stretch"
+													Command="{Binding $parent[Window].DataContext.OpenPackCommand}"
+													CommandParameter="{Binding}">
+												<StackPanel Spacing="10" HorizontalAlignment="Center"
+															VerticalAlignment="Center">
+													<Border Width="172" Height="172" CornerRadius="14" ClipToBounds="True"
+															HorizontalAlignment="Center"
+															Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+														<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+													</Border>
+													<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+															   TextWrapping="Wrap" TextAlignment="Center"
+															   MaxWidth="180" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+												</StackPanel>
+											</Button>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+							<DockPanel Margin="6,0,6,8">
+								<Button DockPanel.Dock="Right" Content="{Binding BrowseViewButtonText}"
+										Width="170" Height="32" HorizontalContentAlignment="Center"
+										VerticalContentAlignment="Center" FontSize="12"
+										Command="{Binding ToggleBrowseViewCommand}"/>
+								<TextBlock Text="All mods" FontSize="15" FontWeight="Medium"
+										   VerticalAlignment="Center"/>
+							</DockPanel>
+							<ItemsControl ItemsSource="{Binding FilteredAvailableMods}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel/>
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:ModRowViewModel">
+										<Button Width="196" Height="240" Margin="6" Padding="0"
+												HorizontalContentAlignment="Stretch"
+												VerticalContentAlignment="Stretch"
+												Command="{Binding $parent[Window].DataContext.OpenModCommand}"
+												CommandParameter="{Binding}">
+											<StackPanel Spacing="10" HorizontalAlignment="Center"
+														VerticalAlignment="Center">
+												<Border Width="172" Height="172" CornerRadius="14" ClipToBounds="True"
+														HorizontalAlignment="Center"
+														Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+													<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+												</Border>
+												<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+														   TextWrapping="Wrap" TextAlignment="Center"
+														   MaxWidth="180" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+												<StackPanel Orientation="Horizontal" Spacing="10"
+															HorizontalAlignment="Center">
+													<TextBlock FontSize="11" Opacity="0.55">
+														<Run Text="▲"/>
+														<Run Text="{Binding Upvotes}"/>
+													</TextBlock>
+													<TextBlock Text="{Binding DownloadsDisplay}" FontSize="11" Opacity="0.55"/>
+												</StackPanel>
+											</StackPanel>
+										</Button>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+
+				<!-- Browse tab: pack details page -->
+				<DockPanel IsVisible="{Binding IsPackDetailVisible}">
+					<Button DockPanel.Dock="Top" Content="&#8592; Back to all mods" FontSize="12"
+							HorizontalAlignment="Left" Margin="0,0,0,12"
+							Command="{Binding ClosePackDetailsCommand}"/>
+					<ScrollViewer>
+						<StackPanel Spacing="12" MaxWidth="560" HorizontalAlignment="Left">
+							<StackPanel Orientation="Horizontal" Spacing="14">
+								<Border Width="88" Height="88" CornerRadius="12" ClipToBounds="True"
+										Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+									<Image Source="{Binding SelectedPack.Icon}" Stretch="UniformToFill"/>
+								</Border>
+								<StackPanel VerticalAlignment="Center" Spacing="4">
+									<TextBlock Text="{Binding SelectedPack.Name}" FontSize="20" FontWeight="Medium"/>
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<TextBlock Text="Mod pack" FontSize="12" Opacity="0.6"/>
+										<TextBlock Text="&#183;" FontSize="12" Opacity="0.6"/>
+										<TextBlock Text="{Binding SelectedPack.CountDisplay}" FontSize="12" Opacity="0.6"/>
+									</StackPanel>
+								</StackPanel>
+							</StackPanel>
+
+							<Button Content="Install pack" HorizontalAlignment="Left"
+									IsEnabled="{Binding SelectedPack.IsBusy, Converter={x:Static BoolConverters.Not}}"
+									Command="{Binding InstallPackCommand}"
+									CommandParameter="{Binding SelectedPack}"/>
+
+							<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+									BorderThickness="0,1,0,0" Padding="0,12,0,0">
+								<StackPanel Spacing="6">
+									<TextBlock Text="Description" FontSize="13" FontWeight="Medium"/>
+									<TextBlock Text="{Binding SelectedPack.Description}" FontSize="13"
+											   TextWrapping="Wrap" Opacity="0.85"/>
+								</StackPanel>
+							</Border>
+
+							<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+									BorderThickness="0,1,0,0" Padding="0,12,0,0">
+								<StackPanel Spacing="6">
+									<TextBlock Text="Included mods" FontSize="13" FontWeight="Medium"/>
+									<ItemsControl ItemsSource="{Binding SelectedPack.ModNames}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding}" FontSize="13" Opacity="0.85" Margin="0,2"/>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</Border>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+
+				<!-- Browse tab: mod details page -->
+				<DockPanel IsVisible="{Binding IsBrowseDetailVisible}">
+					<Button DockPanel.Dock="Top" Content="← Back to all mods" FontSize="12"
+							HorizontalAlignment="Left" Margin="0,0,0,12"
+							Command="{Binding CloseModDetailsCommand}"/>
+					<ScrollViewer>
+						<StackPanel Spacing="12" MaxWidth="560" HorizontalAlignment="Left">
+							<StackPanel Orientation="Horizontal" Spacing="14">
+								<Border Width="88" Height="88" CornerRadius="12" ClipToBounds="True"
+										Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+									<Image Source="{Binding SelectedBrowseMod.Icon}" Stretch="UniformToFill"/>
+								</Border>
+								<StackPanel VerticalAlignment="Center" Spacing="4">
+									<TextBlock Text="{Binding SelectedBrowseMod.Name}" FontSize="20"
+											   FontWeight="Medium"/>
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<TextBlock Text="{Binding SelectedBrowseMod.LatestVersion}" FontSize="12"
+												   Opacity="0.6"/>
+										<TextBlock Text="·" FontSize="12" Opacity="0.6"/>
+										<TextBlock Text="{Binding SelectedBrowseMod.Author}" FontSize="12"
+												   Opacity="0.6"/>
+									</StackPanel>
+									<StackPanel Orientation="Horizontal" Spacing="10">
+										<Border IsVisible="{Binding SelectedBrowseMod.IsPrivate}" CornerRadius="8"
+												Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+												Padding="8,2" VerticalAlignment="Center">
+											<TextBlock Text="Private" FontSize="11" Opacity="0.8"/>
+										</Border>
+										<Border IsVisible="{Binding SelectedBrowseMod.IsNewCreator}" CornerRadius="8"
+												Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+												Padding="8,2" VerticalAlignment="Center">
+											<TextBlock Text="New creator" FontSize="11" Opacity="0.8"/>
+										</Border>
+										<TextBlock Text="{Binding SelectedBrowseMod.DownloadsDisplay}"
+												   FontSize="11" Opacity="0.6" VerticalAlignment="Center"/>
+										<TextBlock IsVisible="{Binding SelectedBrowseMod.HasTags}"
+												   Text="{Binding SelectedBrowseMod.TagsDisplay}"
+												   FontSize="11" Opacity="0.6" VerticalAlignment="Center"/>
+										<TextBlock IsVisible="{Binding SelectedBrowseMod.IsInstalled}"
+												   FontSize="11" Opacity="0.6" VerticalAlignment="Center">
+											<Run Text="Installed"/>
+											<Run Text="{Binding SelectedBrowseMod.InstalledVersion}"/>
+										</TextBlock>
+									</StackPanel>
+								</StackPanel>
+							</StackPanel>
+
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Button Content="Install"
+										IsEnabled="{Binding SelectedBrowseMod.IsBusy, Converter={x:Static BoolConverters.Not}}"
+										IsVisible="{Binding SelectedBrowseMod.IsInstalled, Converter={x:Static BoolConverters.Not}}"
+										Command="{Binding InstallModCommand}"
+										CommandParameter="{Binding SelectedBrowseMod}"/>
+								<Button Content="Update"
+										IsVisible="{Binding SelectedBrowseMod.UpdateAvailable}"
+										Command="{Binding InstallModCommand}"
+										CommandParameter="{Binding SelectedBrowseMod}"/>
+								<Button Command="{Binding ToggleVoteCommand}"
+										CommandParameter="{Binding SelectedBrowseMod}">
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<TextBlock Text="▲" FontSize="12"/>
+										<TextBlock Text="{Binding SelectedBrowseMod.Upvotes}" FontSize="12"/>
+									</StackPanel>
+								</Button>
+								<TextBlock Text="Voted" FontSize="11" Opacity="0.6" VerticalAlignment="Center"
+										   IsVisible="{Binding SelectedBrowseMod.HasVoted}"/>
+							</StackPanel>
+
+							<TextBlock FontSize="12" Opacity="0.7"
+									   IsVisible="{Binding SelectedBrowseMod.HasDependencies}">
+								<Run Text="Requires:"/>
+								<Run Text="{Binding SelectedBrowseMod.DependenciesDisplay}"/>
+								<Run Text="(installed automatically)"/>
+							</TextBlock>
+
+							<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+									BorderThickness="0,1,0,0" Padding="0,12,0,0">
+								<StackPanel Spacing="6">
+									<TextBlock Text="Description" FontSize="13" FontWeight="Medium"/>
+									<TextBlock Text="{Binding SelectedBrowseMod.Description}" FontSize="13"
+											   TextWrapping="Wrap" Opacity="0.85"/>
+								</StackPanel>
+							</Border>
+
+							<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+									BorderThickness="0,1,0,0" Padding="0,12,0,0"
+									IsVisible="{Binding SelectedBrowseMod.HasChangelog}">
+								<StackPanel Spacing="6">
+									<TextBlock Text="What's new" FontSize="13" FontWeight="Medium"/>
+									<TextBlock Text="{Binding SelectedBrowseMod.LatestChangelog}" FontSize="13"
+											   TextWrapping="Wrap" Opacity="0.85"/>
+								</StackPanel>
+							</Border>
+
+							<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+									BorderThickness="0,1,0,0" Padding="0,12,0,0"
+									IsVisible="{Binding SelectedBrowseMod.HasVersionHistory}">
+								<StackPanel Spacing="8">
+									<TextBlock Text="Version history" FontSize="13" FontWeight="Medium"/>
+									<ItemsControl ItemsSource="{Binding SelectedBrowseMod.VersionHistory}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate x:DataType="vm:VersionOptionViewModel">
+												<DockPanel Margin="0,3">
+													<Button DockPanel.Dock="Right" Content="Install this version"
+															FontSize="11"
+															IsVisible="{Binding IsInstalledRevision, Converter={x:Static BoolConverters.Not}}"
+															Command="{Binding $parent[Window].DataContext.InstallVersionCommand}"
+															CommandParameter="{Binding}"/>
+													<TextBlock DockPanel.Dock="Right" Text="Installed" FontSize="11"
+															   Opacity="0.6" VerticalAlignment="Center"
+															   IsVisible="{Binding IsInstalledRevision}"/>
+													<StackPanel Spacing="2" Margin="0,0,10,0">
+														<StackPanel Orientation="Horizontal" Spacing="8">
+															<TextBlock Text="{Binding Display}" FontSize="12" FontWeight="Medium"/>
+															<TextBlock Text="{Binding UploadedDisplay}" FontSize="11" Opacity="0.5"
+																	   VerticalAlignment="Center"/>
+														</StackPanel>
+														<TextBlock Text="{Binding Changelog}" FontSize="11" Opacity="0.65"
+																   TextWrapping="Wrap" IsVisible="{Binding HasChangelog}"/>
+													</StackPanel>
+												</DockPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</Border>
+
+							<Button Content="Report this mod" FontSize="11" Opacity="0.7"
+									HorizontalAlignment="Left">
+								<Button.Flyout>
+									<Flyout Placement="TopEdgeAlignedLeft">
+										<StackPanel Spacing="8" Width="260">
+											<TextBlock Text="What's wrong with this mod?" FontSize="12"/>
+											<TextBox Text="{Binding ReportReason}" AcceptsReturn="True" Height="60"
+													 MaxLength="500"/>
+											<Button Content="Submit report" HorizontalAlignment="Right" FontSize="12"
+													Command="{Binding ReportModCommand}"
+													CommandParameter="{Binding SelectedBrowseMod}"/>
+										</StackPanel>
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+
+				<!-- Profiles tab -->
+				<ScrollViewer IsVisible="{Binding IsProfilesTab}">
+					<StackPanel Spacing="12" MaxWidth="520" HorizontalAlignment="Left">
+						<TextBlock Text="Profiles" FontSize="18"/>
+						<TextBlock Text="A profile is a set of enabled mods. Switching profiles enables and disables your installed mods to match."
+								   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+
+						<ItemsControl ItemsSource="{Binding ProfileRows}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:ProfileRowViewModel">
+									<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											BorderThickness="0,0,0,1" Padding="4,10">
+										<DockPanel>
+											<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8"
+														VerticalAlignment="Center">
+												<TextBlock Text="Active" FontSize="11" Opacity="0.6"
+														   VerticalAlignment="Center" IsVisible="{Binding IsActive}"/>
+												<Button Content="Switch" FontSize="12"
+														IsVisible="{Binding IsActive, Converter={x:Static BoolConverters.Not}}"
+														Command="{Binding $parent[Window].DataContext.SwitchProfileCommand}"
+														CommandParameter="{Binding}"/>
+												<Button Content="Remove" FontSize="12"
+														IsVisible="{Binding IsActive, Converter={x:Static BoolConverters.Not}}"
+														Command="{Binding $parent[Window].DataContext.RemoveProfileCommand}"
+														CommandParameter="{Binding}"/>
+											</StackPanel>
+											<StackPanel VerticalAlignment="Center" Spacing="2">
+												<TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+												<TextBlock Text="{Binding CountDisplay}" FontSize="11" Opacity="0.5"/>
+											</StackPanel>
+										</DockPanel>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="New profile" FontSize="13" Margin="0,8,0,0"/>
+						<TextBlock Text="Starts empty — switch to it, then enable the mods you want in it."
+								   FontSize="12" Opacity="0.6"/>
+						<DockPanel>
+							<Button DockPanel.Dock="Right" Content="Create" Margin="8,0,0,0"
+									Command="{Binding CreateProfileCommand}"/>
+							<TextBox Text="{Binding NewProfileName}" Watermark="Profile name" MaxLength="40"/>
+						</DockPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<!-- Settings tab -->
+				<StackPanel IsVisible="{Binding IsSettingsTab}" Spacing="12" MaxWidth="480"
+							HorizontalAlignment="Left">
+					<TextBlock Text="Settings" FontSize="18"/>
+					<TextBlock Text="Game folder" FontSize="12" Opacity="0.6"/>
+					<TextBox Text="{Binding GamePath}" IsReadOnly="True"/>
+
+					<TextBlock Text="Set game folder manually (leave empty for auto-detect)"
+							   FontSize="12" Opacity="0.6" Margin="0,8,0,0"/>
+					<DockPanel>
+						<Button DockPanel.Dock="Right" Content="Set" Margin="8,0,0,0"
+								Command="{Binding SetGamePathCommand}"/>
+						<Button DockPanel.Dock="Right" Content="Browse" Margin="8,0,0,0"
+								Click="OnBrowseGameFolder"/>
+						<TextBox Text="{Binding GamePathInput}"
+								 Watermark="steamapps/common/Ultimate Chicken Horse"/>
+					</DockPanel>
+
+					<StackPanel Spacing="4" Margin="0,8,0,0">
+						<ToggleSwitch IsChecked="{Binding ShowBepInExConsole}"
+									  OnContent="BepInEx console shown on launch"
+									  OffContent="BepInEx console hidden on launch"/>
+						<TextBlock Text="The console is the black log window that opens with the game. Useful for debugging mods; safe to hide otherwise."
+								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+					</StackPanel>
+
+					<StackPanel Spacing="4" Margin="0,8,0,0" IsVisible="{Binding HasLaunchOptions}">
+						<TextBlock Text="Steam launch options (required on this platform)" FontSize="12" Opacity="0.6"/>
+						<TextBox Text="{Binding LaunchOptionsText}" IsReadOnly="True"
+								 FontFamily="Consolas,Menlo,monospace" FontSize="12"/>
+						<TextBlock Text="Set in Steam: right-click the game → Properties → Launch Options."
+								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+					</StackPanel>
+				</StackPanel>
+
+				<!-- Upload tab -->
+				<DockPanel IsVisible="{Binding IsUploadTab}">
+					<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="14"
+								Margin="0,0,0,14">
+						<StackPanel Spacing="3">
+							<Button Content="Upload a mod" FontSize="13" Padding="10,6"
+									Background="Transparent" BorderThickness="0"
+									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="Upload"/>
+							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
+									IsVisible="{Binding Upload.IsUploadSection}"/>
+						</StackPanel>
+						<StackPanel Spacing="3">
+							<Button Content="Your mods" FontSize="13" Padding="10,6"
+									Background="Transparent" BorderThickness="0"
+									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="MyMods"/>
+							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
+									IsVisible="{Binding Upload.IsMyModsSection}"/>
+						</StackPanel>
+						<StackPanel Spacing="3" IsVisible="{Binding Upload.IsAdmin}">
+							<Button Content="Packs" FontSize="13" Padding="10,6"
+									Background="Transparent" BorderThickness="0"
+									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="Packs"/>
+							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
+									IsVisible="{Binding Upload.IsPacksSection}"/>
+						</StackPanel>
+						<StackPanel Spacing="3" IsVisible="{Binding Upload.IsAdmin}">
+							<Button Content="Review" FontSize="13" Padding="10,6"
+									Background="Transparent" BorderThickness="0"
+									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="Review"/>
+							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
+									IsVisible="{Binding Upload.IsReviewSection}"/>
+						</StackPanel>
+					</StackPanel>
+
+					<ScrollViewer>
+						<StackPanel Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
+
+							<!-- Section: Upload a mod -->
+							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsUploadSection}">
+								<StackPanel Orientation="Horizontal" Spacing="10">
+									<Button Content="Login with Discord"
+											Command="{Binding Upload.LoginWithDiscordCommand}"
+											IsVisible="{Binding Upload.IsLoggedIn, Converter={x:Static BoolConverters.Not}}"/>
+									<StackPanel Orientation="Horizontal" Spacing="6"
+												IsVisible="{Binding Upload.IsLoggedIn}">
+										<Ellipse Width="8" Height="8" Fill="Green" VerticalAlignment="Center"/>
+										<TextBlock Text="Logged in with Discord" FontSize="12" VerticalAlignment="Center"/>
+										<Button Content="Log out" FontSize="11"
+												Command="{Binding Upload.LogOutCommand}"/>
+									</StackPanel>
+								</StackPanel>
+
+								<TextBlock Text="Mod name" FontSize="12" Opacity="0.6"/>
+								<TextBox Text="{Binding Upload.ModName}" Watermark="Shown in Browse; also the install folder name"
+										 MaxLength="60"/>
+
+								<TextBlock Text="Mod file (.dll or .zip)" FontSize="12" Opacity="0.6"/>
+								<DockPanel>
+									<Button DockPanel.Dock="Right" Content="Choose file" Margin="8,0,0,0"
+											Click="OnChooseModFile"/>
+									<TextBox Text="{Binding Upload.ModFilePath}" IsReadOnly="True"/>
+								</DockPanel>
+								<TextBlock Text="{Binding Upload.UploadPreview}" FontSize="12" Opacity="0.8"
+										   TextWrapping="Wrap"/>
+
+								<TextBlock Text="Icon (.png, optional, max 1 MB)" FontSize="12" Opacity="0.6"/>
+								<DockPanel>
+									<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
+											Click="OnChooseIconFile"/>
+									<TextBox Text="{Binding Upload.IconFilePath}" IsReadOnly="True"/>
+								</DockPanel>
+
+								<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
+								<TextBox Text="{Binding Upload.Description}" AcceptsReturn="True" Height="70"/>
+
+								<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
+								<ItemsControl ItemsSource="{Binding Upload.UploadTags}">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<StackPanel Orientation="Horizontal" Spacing="14"/>
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+
+								<TextBlock Text="Changelog (optional — shown as 'What's new')" FontSize="12" Opacity="0.6"/>
+								<TextBox Text="{Binding Upload.Changelog}" AcceptsReturn="True" Height="50"/>
+
+								<CheckBox Content="Private mod" IsChecked="{Binding Upload.IsPrivateMod}" FontSize="12"/>
+								<TextBlock Text="Private mods are hidden from Browse. Share access by generating one-time keys after upload."
+										   FontSize="11" Opacity="0.5" TextWrapping="Wrap"
+										   IsVisible="{Binding Upload.IsPrivateMod}"/>
+
+								<TextBlock Text="Dependencies" FontSize="12" Opacity="0.6"/>
+								<DockPanel>
+									<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
+											Command="{Binding Upload.AddDependencyCommand}"/>
+									<TextBox DockPanel.Dock="Right" Width="110" Margin="8,0,0,0"
+											 Text="{Binding Upload.DependencyConstraint}"/>
+									<ComboBox ItemsSource="{Binding Upload.IndexMods}"
+											  SelectedItem="{Binding Upload.SelectedDependency}"
+											  HorizontalAlignment="Stretch">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Name}"/>
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</DockPanel>
+								<ItemsControl ItemsSource="{Binding Upload.Dependencies}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<StackPanel Orientation="Horizontal" Spacing="8">
+												<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+												<Button Content="Remove" FontSize="11"
+														Command="{Binding $parent[Window].DataContext.Upload.RemoveDependencyCommand}"
+														CommandParameter="{Binding}"/>
+											</StackPanel>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+
+								<Button Content="Upload mod" Command="{Binding Upload.UploadCommand}"
+										IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+							</StackPanel>
+
+							<!-- Section: Your mods -->
+							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsMyModsSection}">
+								<TextBlock Text="You haven't uploaded any mods yet."
+										   FontSize="12" Opacity="0.6"
+										   IsVisible="{Binding Upload.HasMyMods, Converter={x:Static BoolConverters.Not}}"/>
+								<StackPanel Spacing="10" IsVisible="{Binding Upload.HasMyMods}">
+									<TextBlock Text="Click a mod to manage it." FontSize="12" Opacity="0.6"/>
+									<ItemsControl ItemsSource="{Binding Upload.MyMods}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<WrapPanel/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate x:DataType="vm:MyModInfo">
+												<Button Width="196" Height="240" Margin="6" Padding="0"
+														HorizontalContentAlignment="Stretch"
+														VerticalContentAlignment="Stretch"
+														Command="{Binding $parent[Window].DataContext.Upload.SelectMyModCommand}"
+														CommandParameter="{Binding}">
+													<StackPanel Spacing="8" HorizontalAlignment="Center"
+																VerticalAlignment="Center">
+														<Border Width="172" Height="172" CornerRadius="14" ClipToBounds="True"
+																HorizontalAlignment="Center"
+																Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+															<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+														</Border>
+														<StackPanel Orientation="Horizontal" Spacing="6"
+																	HorizontalAlignment="Center">
+															<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+																	   TextWrapping="Wrap" TextAlignment="Center"
+																	   MaxWidth="140" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+															<Border IsVisible="{Binding IsSelected}" CornerRadius="8"
+																	Background="{DynamicResource SystemAccentColor}" Padding="7,1"
+																	VerticalAlignment="Center">
+																<TextBlock Text="Selected" FontSize="10" Foreground="White"/>
+															</Border>
+															<Border IsVisible="{Binding HasPending}" CornerRadius="8"
+																	Background="#B8860B" Padding="7,1"
+																	VerticalAlignment="Center">
+																<TextBlock Text="Pending" FontSize="10" Foreground="White"/>
+															</Border>
+														</StackPanel>
+													</StackPanel>
+												</Button>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+									<StackPanel Spacing="8" IsVisible="{Binding Upload.SelectedMyModIsPrivate}">
+										<Border Height="1" Opacity="0.5"
+												Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+												Margin="0,8,0,4"/>
+										<TextBlock Text="Access keys" FontSize="14" FontWeight="Medium"/>
+										<TextBlock Text="Generate a one-time key to give one person access to this private mod."
+												   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<Button Content="Generate key" FontSize="12"
+													Command="{Binding Upload.GenerateKeyCommand}"/>
+											<TextBox Text="{Binding Upload.GeneratedKey}" IsReadOnly="True" MinWidth="220"
+													 FontFamily="Consolas,Menlo,monospace"
+													 IsVisible="{Binding Upload.GeneratedKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+										</StackPanel>
+									</StackPanel>
+
+									<Border Height="1" Opacity="0.5"
+											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											Margin="0,8,0,4"/>
+									<TextBlock Text="Update mod" FontSize="14" FontWeight="Medium"/>
+									<TextBlock Text="Upload the new .dll for this mod — no version bump required. Icon, description, and dependencies are kept."
+											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Choose file" Margin="8,0,0,0"
+												Click="OnChooseUpdateModFile"/>
+										<TextBox Text="{Binding Upload.UpdateModFilePath}" IsReadOnly="True"/>
+									</DockPanel>
+									<TextBlock Text="{Binding Upload.UpdatePreview}" FontSize="12" Opacity="0.8"
+											   TextWrapping="Wrap"/>
+									<TextBlock Text="Changelog (optional)" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.UpdateChangelog}" AcceptsReturn="True" Height="50"/>
+									<Button Content="Update mod" Command="{Binding Upload.UpdateModCommand}"
+											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+
+									<Border Height="1" Opacity="0.5"
+											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											Margin="0,8,0,4"/>
+									<TextBlock Text="Edit details" FontSize="14" FontWeight="Medium"/>
+									<TextBlock Text="Change the name, icon, or description without uploading a new version."
+											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+									<TextBlock Text="Name" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.DetailsName}" MaxLength="60"/>
+									<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.DetailsDescription}" AcceptsReturn="True" Height="60"/>
+									<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
+									<ItemsControl ItemsSource="{Binding Upload.DetailsTags}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="14"/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+									<TextBlock Text="New icon (.png, optional)" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
+												Click="OnChooseDetailsIconFile"/>
+										<TextBox Text="{Binding Upload.DetailsIconPath}" IsReadOnly="True"/>
+									</DockPanel>
+									<Button Content="Update details" Command="{Binding Upload.UpdateDetailsCommand}"
+											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+								</StackPanel>
+							</StackPanel>
+
+							<!-- Section: Packs (admins only) -->
+							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsPacksSection}">
+								<TextBlock Text="Packs appear in Browse for everyone. Installing one creates a matching profile."
+										   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+
+								<TextBlock Text="Pack name" FontSize="12" Opacity="0.6"/>
+								<TextBox Text="{Binding Upload.PackName}" MaxLength="60"/>
+
+								<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
+								<TextBox Text="{Binding Upload.PackDescription}" AcceptsReturn="True" Height="60"/>
+
+								<TextBlock Text="Icon (.png, optional)" FontSize="12" Opacity="0.6"/>
+								<DockPanel>
+									<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
+											Click="OnChoosePackIconFile"/>
+									<TextBox Text="{Binding Upload.PackIconPath}" IsReadOnly="True"/>
+								</DockPanel>
+
+								<StackPanel Orientation="Horizontal" Spacing="10">
+									<Button Content="Select mods" Command="{Binding Upload.TogglePackPickerCommand}"/>
+									<TextBlock Text="{Binding Upload.SelectedPackModsDisplay}" FontSize="12"
+											   Opacity="0.7" VerticalAlignment="Center"/>
+								</StackPanel>
+
+								<Border IsVisible="{Binding Upload.IsPackPickerOpen}" CornerRadius="6"
+										BorderThickness="1" Padding="10"
+										BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+									<StackPanel Spacing="8">
+										<TextBox Watermark="Search mods" Text="{Binding Upload.PackModSearchText}"/>
+										<ScrollViewer MaxHeight="220">
+											<ItemsControl ItemsSource="{Binding Upload.FilteredPackMods}">
+												<ItemsControl.ItemTemplate>
+													<DataTemplate>
+														<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
+																  FontSize="12" Margin="0,1"/>
+													</DataTemplate>
+												</ItemsControl.ItemTemplate>
+											</ItemsControl>
+										</ScrollViewer>
+									</StackPanel>
+								</Border>
+
+								<Button Content="Create pack" Command="{Binding Upload.CreatePackCommand}"
+										IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+							</StackPanel>
+
+							<!-- Section: Review (admins only) -->
+							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsReviewSection}">
+								<TextBlock Text="Uploads from unverified creators wait here until approved. Download and inspect before approving."
+										   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+								<TextBlock Text="Nothing waiting for review." FontSize="12" Opacity="0.6"
+										   IsVisible="{Binding Upload.HasPendingItems, Converter={x:Static BoolConverters.Not}}"/>
+								<ItemsControl ItemsSource="{Binding Upload.PendingItems}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:PendingItemViewModel">
+											<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+													BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+												<StackPanel Spacing="8">
+													<StackPanel Orientation="Horizontal" Spacing="8">
+														<TextBlock Text="{Binding Display}" FontWeight="Medium" FontSize="13"/>
+														<TextBlock Text="{Binding UploadedDisplay}" FontSize="11" Opacity="0.5"
+																   VerticalAlignment="Center"/>
+													</StackPanel>
+													<TextBlock Text="{Binding Changelog}" FontSize="12" Opacity="0.7"
+															   TextWrapping="Wrap" IsVisible="{Binding HasChangelog}"/>
+													<StackPanel Orientation="Horizontal" Spacing="8">
+														<Button Content="Download to inspect" FontSize="12"
+																Command="{Binding $parent[Window].DataContext.Upload.DownloadPendingCommand}"
+																CommandParameter="{Binding}"/>
+														<Button Content="Approve" FontSize="12"
+																Command="{Binding $parent[Window].DataContext.Upload.ApprovePendingCommand}"
+																CommandParameter="{Binding}"/>
+														<Button Content="Approve + verify author" FontSize="12"
+																Command="{Binding $parent[Window].DataContext.Upload.ApproveAndVerifyCommand}"
+																CommandParameter="{Binding}"/>
+														<Button Content="Reject" FontSize="12" Foreground="Red"
+																Command="{Binding $parent[Window].DataContext.Upload.RejectPendingCommand}"
+																CommandParameter="{Binding}"/>
+													</StackPanel>
+												</StackPanel>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+
+							<TextBlock Text="{Binding Upload.Status}" FontSize="12" TextWrapping="Wrap"
+									   Margin="0,6,0,0"/>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+
+			</Panel>
+		</DockPanel>
+
+		<!-- BepInEx install prompt: in-window modal overlay -->
+		<Panel IsVisible="{Binding IsBepInExPromptVisible}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24"
+					BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<StackPanel Spacing="14">
+					<TextBlock Text="BepInEx isn't installed" FontSize="16" FontWeight="Medium"/>
+					<TextBlock Text="Without it none of your mods will work. Would you like to install BepInEx?"
+							   FontSize="13" TextWrapping="Wrap" Opacity="0.85"/>
+					<TextBlock Text="Installing…" FontSize="12" Opacity="0.7"
+							   IsVisible="{Binding IsBepInExInstalling}"/>
+					<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+						<Button Content="Not now"
+								IsEnabled="{Binding IsBepInExInstalling, Converter={x:Static BoolConverters.Not}}"
+								Command="{Binding DismissBepInExPromptCommand}"/>
+						<Button Content="Install BepInEx" Classes="accent"
+								IsEnabled="{Binding IsBepInExInstalling, Converter={x:Static BoolConverters.Not}}"
+								Command="{Binding InstallBepInExCommand}"/>
+					</StackPanel>
+				</StackPanel>
+			</Border>
+		</Panel>
+
+		<!-- Loader self-update prompt -->
+		<Panel IsVisible="{Binding IsUpdatePromptVisible}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24"
+					BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<StackPanel Spacing="14">
+					<TextBlock Text="Update available" FontSize="16" FontWeight="Medium"/>
+					<TextBlock Text="{Binding UpdatePromptText}" FontSize="13" TextWrapping="Wrap"
+							   Opacity="0.85"/>
+					<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+						<Button Content="Later" Command="{Binding DismissUpdatePromptCommand}"/>
+						<Button Content="Download" Classes="accent" Command="{Binding OpenLoaderUpdateCommand}"/>
+					</StackPanel>
+				</StackPanel>
+			</Border>
+		</Panel>
+
+		<!-- Steam launch options instruction (Linux / Steam Deck / macOS) -->
+		<Panel IsVisible="{Binding IsLaunchOptionsPromptVisible}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="460" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24"
+					BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<StackPanel Spacing="14">
+					<TextBlock Text="One more step" FontSize="16" FontWeight="Medium"/>
+					<TextBlock FontSize="13" TextWrapping="Wrap" Opacity="0.85"
+							   Text="On this platform, Steam needs to be told to load BepInEx. In Steam, right-click Ultimate Chicken Horse → Properties → General → Launch Options, and paste:"/>
+					<TextBox Text="{Binding LaunchOptionsText}" IsReadOnly="True"
+							 FontFamily="Consolas,Menlo,monospace" FontSize="12"/>
+					<TextBlock Text="Mods won't load until this is set. You only need to do it once."
+							   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+					<Button Content="Done" Classes="accent" HorizontalAlignment="Right"
+							Command="{Binding DismissLaunchOptionsPromptCommand}"/>
+				</StackPanel>
+			</Border>
+		</Panel>
+
+	</Panel>
+</Window>
