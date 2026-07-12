@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "MongoDB.Driver": {
+        "type": "Direct",
+        "requested": "[2.28.0, )",
+        "resolved": "2.28.0",
+        "contentHash": "/aMeLbiqm8aqopZU7MlnJwQfc94VLoTRIK3xPSWqv6kDS1MV8tf1kcX2X3Ji71n2NspZ1jwHIpZ/AP5sQyBhXw==",
+        "dependencies": {
+          "MongoDB.Bson": "2.28.0",
+          "MongoDB.Driver.Core": "2.28.0",
+          "MongoDB.Libmongocrypt": "1.11.0"
+        }
+      },
+      "MongoDB.Driver.GridFS": {
+        "type": "Direct",
+        "requested": "[2.28.0, )",
+        "resolved": "2.28.0",
+        "contentHash": "wjMPZXWH5uCi3PtZZXwxdK4bhdwBH4wUa0qT62IaXcxhFrhslTeJIBSabdgZjvtJEbFl20qyckdoCxbEcypHRQ==",
+        "dependencies": {
+          "MongoDB.Bson": "2.28.0",
+          "MongoDB.Driver": "2.28.0",
+          "MongoDB.Driver.Core": "2.28.0"
+        }
+      },
+      "SkiaSharp": {
+        "type": "Direct",
+        "requested": "[2.88.8, )",
+        "resolved": "2.88.8",
+        "contentHash": "bRkp3uKp5ZI8gXYQT57uKwil1uobb2p8c69n7v5evlB/2JNcMAXVcw9DZAP5Ig3WSvgzGm2YSn27UVeOi05NlA==",
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "2.88.8",
+          "SkiaSharp.NativeAssets.macOS": "2.88.8"
+        }
+      },
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "Direct",
+        "requested": "[2.88.8, )",
+        "resolved": "2.88.8",
+        "contentHash": "/DoKtdyvRgCC5GR/SH+ps3ZiOjmf0BYpAyrhWQELFOO1hdcqddrDVJjDNCOJ41vV+NlS5b3kcDoZZ7jLhFjyXg==",
+        "dependencies": {
+          "SkiaSharp": "2.88.8"
+        }
+      },
+      "System.Reflection.Metadata": {
+        "type": "Direct",
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "ptvgrFh7PvWI8bcVqG5rsA/weWM09EnthFHR5SCnS6IN+P4mj6rE1lBDC4U8HL9/57htKAqy4KQ3bBj84cfYyQ=="
+      },
+      "AWSSDK.Core": {
+        "type": "Transitive",
+        "resolved": "3.7.100.14",
+        "contentHash": "gnEgxBlk4PFEfdPE8Lkf4+D16MZFYSaW7/o6Wwe5e035QWUkTJX0Dn4LfTCdV5QSEL/fOFxu+yCAm55eIIBgog=="
+      },
+      "AWSSDK.SecurityToken": {
+        "type": "Transitive",
+        "resolved": "3.7.100.14",
+        "contentHash": "dGCVuVo0CFUKWW85W8YENO+aREf8sCBDjvGbnNvxJuNW4Ss+brEU9ltHhq2KfZze2VUNK1/wygbPG1bmbpyXEw==",
+        "dependencies": {
+          "AWSSDK.Core": "[3.7.100.14, 4.0.0)"
+        }
+      },
+      "DnsClient": {
+        "type": "Transitive",
+        "resolved": "1.6.1",
+        "contentHash": "4H/f2uYJOZ+YObZjpY9ABrKZI+JNw3uizp6oMzTXwDw6F+2qIPhpRl/1t68O/6e98+vqNiYGu+lswmwdYUy3gg=="
+      },
+      "MongoDB.Bson": {
+        "type": "Transitive",
+        "resolved": "2.28.0",
+        "contentHash": "yiWN3scVV0lYpFXn1CL4PB0BK3KrHFC44qw72+/cBIDS9+r9MQYfxFMxM+pAvnSssAZtQ7ZabCu7z3UOXqKy4w=="
+      },
+      "MongoDB.Driver.Core": {
+        "type": "Transitive",
+        "resolved": "2.28.0",
+        "contentHash": "Ek5cjiN9FwBsTdJnLouOsKWjplr4D+8fs9urOhzBKZLygOsgIxTDLzpoHC3Mg4bJ1V/Mbz0/xXr0KqUXdmzqEg==",
+        "dependencies": {
+          "AWSSDK.SecurityToken": "3.7.100.14",
+          "DnsClient": "1.6.1",
+          "MongoDB.Bson": "2.28.0",
+          "MongoDB.Libmongocrypt": "1.11.0",
+          "SharpCompress": "0.30.1",
+          "Snappier": "1.0.0",
+          "ZstdSharp.Port": "0.7.3"
+        }
+      },
+      "MongoDB.Libmongocrypt": {
+        "type": "Transitive",
+        "resolved": "1.11.0",
+        "contentHash": "x1Fm9b5/93k1l0FpbUxHrcFIm/6m/qXfmbQddtHILqltx2EVSkIAzzBMiCr4D/3IBXSEWzgXP73xFExIpXQ9lQ=="
+      },
+      "SharpCompress": {
+        "type": "Transitive",
+        "resolved": "0.30.1",
+        "contentHash": "XqD4TpfyYGa7QTPzaGlMVbcecKnXy4YmYLDWrU+JIj7IuRNl7DH2END+Ll7ekWIY8o3dAMWLFDE1xdhfIWD1nw=="
+      },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "Transitive",
+        "resolved": "2.88.8",
+        "contentHash": "6Kn5TSkKlfyS6azWHF3Jk2sW5C4jCE5uSshM/5AbfFrR+5n6qM5XEnz9h4VaVl7LTxBvHvMkuPb/3bpbq0vxTw=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "Transitive",
+        "resolved": "2.88.8",
+        "contentHash": "O9QXoWEXA+6cweR4h3BOnwMz+pO9vL9mXdjLrpDd0w1QzCgWmLQBxa1VgySDITiH7nQndrDG1h6937zm9pLj1Q=="
+      },
+      "Snappier": {
+        "type": "Transitive",
+        "resolved": "1.0.0",
+        "contentHash": "rFtK2KEI9hIe8gtx3a0YDXdHOpedIf9wYCEYtBEmtlyiWVX3XlCNV03JrmmAi/Cdfn7dxK+k0sjjcLv4fpHnqA=="
+      },
+      "ZstdSharp.Port": {
+        "type": "Transitive",
+        "resolved": "0.7.3",
+        "contentHash": "U9Ix4l4cl58Kzz1rJzj5hoVTjmbx1qGMwzAcbv1j/d3NzrFaESIurQyg+ow4mivCgkE3S413y+U9k4WdnEIkRA=="
+      },
+      "uchmodloader.core": {
+        "type": "Project"
+      }
+    }
+  }
+}
