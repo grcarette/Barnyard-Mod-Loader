@@ -1,7 +1,0 @@
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\Barnyard.pdb
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\Barnyard.ico
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\libAvaloniaNative.dylib
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\libHarfBuzzSharp.dylib
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\libSkiaSharp.dylib
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\UCHModLoader.Core.pdb
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\osx-arm64\publish\Barnyard

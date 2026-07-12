@@ -1,7 +1,0 @@
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\Barnyard.pdb
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\Barnyard.ico
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\av_libglesv2.dll
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\libHarfBuzzSharp.dll
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\libSkiaSharp.dll
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\UCHModLoader.Core.pdb
-C:\Users\grcar\source\repos\UCHModLoader\UCHModLoader.App\bin\Release\net10.0\win-x64\publish\Barnyard.exe
