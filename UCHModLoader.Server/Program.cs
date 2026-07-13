@@ -260,7 +260,8 @@ app.MapPost("/api/packs/{packId}/icon", async (string packId, HttpRequest reques
 app.MapGet("/api/loaderversion", (IConfiguration config) => Results.Json(new
 {
     version = config["Loader:Version"] ?? "1.0.0",
-    downloadUrl = config["Loader:DownloadUrl"] ?? "",
+    downloadUrl = config["Loader:DownloadUrl"] ?? "",       // release page (browser fallback)
+    winZipUrl = config["Loader:WinZipUrl"] ?? "",           // direct win-x64 zip: enables auto-update
 }));
 
 app.MapGet("/api/download/{modId}/rev/{revision:int}", async (string modId, int revision,

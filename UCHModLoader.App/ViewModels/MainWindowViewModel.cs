@@ -17,7 +17,7 @@ namespace UCHModLoader.App.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public const string LoaderVersion = "1.1.0";
+    public const string LoaderVersion = "1.1.1";
 
     private const string AllTagsOption = "All tags";
     public const string SortMostDownloaded = "Most downloaded";
@@ -59,6 +59,12 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private bool _isUpdatePromptVisible;
     [ObservableProperty] private string _updatePromptText = "";
     [ObservableProperty] private string _loaderUpdateUrl = "";
+    [ObservableProperty] private string _loaderWinZipUrl = "";
+    [ObservableProperty] private bool _isSelfUpdating;
+    [ObservableProperty] private bool _isRestartBarnyardVisible;
+
+    public bool CanAutoUpdate => SelfUpdater.CanAutoUpdate(LoaderWinZipUrl);
+    partial void OnLoaderWinZipUrlChanged(string value) => OnPropertyChanged(nameof(CanAutoUpdate));
     [ObservableProperty] private string _gamePathInput = "";
     [ObservableProperty] private string _reportReason = "";
     [ObservableProperty] private bool _showAllInstalledMods;
@@ -995,6 +1001,8 @@ public partial class MainWindowViewModel : ObservableObject
             using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             var remote = json.RootElement.GetProperty("version").GetString() ?? "";
             var url = json.RootElement.GetProperty("downloadUrl").GetString() ?? "";
+            var winZip = json.RootElement.TryGetProperty("winZipUrl", out var wz)
+                ? wz.GetString() ?? "" : "";
 
             if (Version.TryParse(remote, out var remoteVersion) &&
                 Version.TryParse(LoaderVersion, out var localVersion) &&
@@ -1003,6 +1011,7 @@ public partial class MainWindowViewModel : ObservableObject
                 UpdatePromptText =
                     $"Barnyard {remote} is available (you have {LoaderVersion}).";
                 LoaderUpdateUrl = url;
+                LoaderWinZipUrl = winZip;
                 IsUpdatePromptVisible = true;
             }
         }
@@ -1014,6 +1023,86 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (!string.IsNullOrEmpty(LoaderUpdateUrl)) UrlOpener.Open(LoaderUpdateUrl);
         IsUpdatePromptVisible = false;
+    }
+
+    /// <summary>
+    /// Downloads the new build and swaps it in place (locked files are
+    /// renamed aside), then relaunches into the new version.
+    /// </summary>
+    [RelayCommand]
+    private async Task UpdateNowAsync()
+    {
+        if (!SelfUpdater.CanAutoUpdate(LoaderWinZipUrl))
+        {
+            OpenLoaderUpdate();   // platforms without a zip use the browser flow
+            return;
+        }
+
+        IsSelfUpdating = true;
+        try
+        {
+            var progress = new Progress<double>(p =>
+                UpdatePromptText = $"Downloading update… {p:0}%");
+            await SelfUpdater.ApplyAsync(LoaderWinZipUrl, progress);
+        }
+        catch (Exception ex)
+        {
+            LogUpdateError(ex);
+            UpdatePromptText = "Automatic update failed: use the download page instead.";
+            IsSelfUpdating = false;
+            return;
+        }
+
+        // Past this point the new version is already on disk — a restart
+        // hiccup must not be reported as a failed update.
+        try
+        {
+            // Let the confirmation actually be read before the window vanishes.
+            UpdatePromptText = "Download finished — restarting in the new version…";
+            await Task.Delay(2000);
+            SelfUpdater.RestartIntoNewVersion();
+            if (Application.Current?.ApplicationLifetime
+                is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                desktop.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            LogUpdateError(ex);
+            UpdatePromptText = "Update installed: close and reopen Barnyard to finish.";
+            IsRestartBarnyardVisible = true;
+            IsSelfUpdating = false;
+        }
+    }
+
+    /// <summary>Manual fallback when the automatic post-update restart failed.</summary>
+    [RelayCommand]
+    private void RestartBarnyard()
+    {
+        try
+        {
+            SelfUpdater.RestartIntoNewVersion();
+            if (Application.Current?.ApplicationLifetime
+                is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                desktop.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            LogUpdateError(ex);
+            UpdatePromptText = "Couldn't restart automatically — close and reopen Barnyard.";
+            IsRestartBarnyardVisible = false;
+        }
+    }
+
+    // Full details go to a log file; the prompt stays clean and actionable.
+    private static void LogUpdateError(Exception ex)
+    {
+        try
+        {
+            File.WriteAllText(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "UCHModLoader", "update-error.log"), ex.ToString());
+        }
+        catch { }
     }
 
     [RelayCommand]

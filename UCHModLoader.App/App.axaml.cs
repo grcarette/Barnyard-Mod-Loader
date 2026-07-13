@@ -19,8 +19,10 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Clean up leftovers from the over-packed v1.0.0 release zip.
+            // Clean up leftovers from the over-packed v1.0.0 release zip, and
+            // the "*.old" files a self-update renamed aside last run.
             ReleaseJunkCleanup.Run();
+            SelfUpdater.CleanupOldFiles();
 
             var http = new HttpClient();
             http.DefaultRequestHeaders.UserAgent.ParseAdd("UCHModLoader/0.1");
