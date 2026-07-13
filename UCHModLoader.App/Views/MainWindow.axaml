@@ -161,7 +161,7 @@
 															VerticalAlignment="Center">
 													<Border IsVisible="{Binding UpdateAvailable}" CornerRadius="10"
 															Background="{DynamicResource SystemAccentColor}" Padding="8,2">
-														<TextBlock FontSize="11" Foreground="White">
+														<TextBlock FontSize="11" Foreground="White" VerticalAlignment="Center">
 															<Run Text="Update"/>
 															<Run Text="{Binding LatestVersion}"/>
 														</TextBlock>

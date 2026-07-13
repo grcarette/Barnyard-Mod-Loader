@@ -48,6 +48,8 @@ jobs:
         run: dotnet restore --locked-mode
 
       - name: Publish
+        # -p:Version stamps the exe's file/product version from the tag
+        # (v1.1.2 -> 1.1.2), so Explorer's hover matches the release.
         run: |
           dotnet publish \
             UCHModLoader.App/UCHModLoader.App.csproj \
@@ -55,6 +57,7 @@ jobs:
             --runtime ${{ matrix.rid }} \
             --self-contained \
             -p:PublishSingleFile=true \
+            -p:Version=${GITHUB_REF_NAME#v} \
             --output publish/${{ matrix.rid }}
 
       - name: Package
