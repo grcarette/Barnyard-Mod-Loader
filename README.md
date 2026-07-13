@@ -25,8 +25,8 @@ loads the mods, so say yes. After that you can install mods from the Browse tab.
 1. Download the `linux-x64` zip from the [releases page](../../releases/latest) and extract it
 2. Run:
    ```
-   chmod +x UCHModLoader.App
-   ./UCHModLoader.App
+   chmod +x Barnyard.App
+   ./Barnyard.App
    ```
 3. After BepInEx installs, the app shows a launch options string. Copy it into
    Steam under right-click UCH -> Properties -> Launch Options. Mods won't load
