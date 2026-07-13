@@ -58,20 +58,24 @@ jobs:
             --output publish/${{ matrix.rid }}
 
       - name: Package
+        # Archives are named after the app + tag (Barnyard-v1.1.0-win-x64.zip),
+        # with the files at the archive ROOT — extracting over an existing
+        # install must overwrite in place (the app's startup cleanup of the
+        # over-packed v1.0.0 release depends on that layout too).
         run: |
           cp LICENSE publish/${{ matrix.rid }}/
-          cd publish
+          cd publish/${{ matrix.rid }}
 
           if [ "${{ matrix.archive }}" = "zip" ]; then
-            zip -r ../UCHModLoader-${{ matrix.rid }}.zip ${{ matrix.rid }}
+            zip -r ../../Barnyard-${{ github.ref_name }}-${{ matrix.rid }}.zip .
           else
-            tar -czf ../UCHModLoader-${{ matrix.rid }}.tar.gz ${{ matrix.rid }}
+            tar -czf ../../Barnyard-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz .
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: UCHModLoader-${{ matrix.rid }}
+          name: Barnyard-${{ matrix.rid }}
           path: |
             *.zip
             *.tar.gz
