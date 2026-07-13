@@ -10,7 +10,10 @@ public sealed class AppSettings
     public string ServerUrl { get; set; } = DefaultServerUrl;
     public string ApiToken { get; set; } = "";
     public bool IsMaximized { get; set; }
-    public bool ShowBepInExConsole { get; set; } = true;
+    public bool SetupCompleted { get; set; }
+    public bool ShowBepInExConsole { get; set; }
+    public bool DarkMode { get; set; } = true;
+    public bool AutoUpdateMods { get; set; }
     public string GamePathOverride { get; set; } = "";
 
     private static string SettingsPath => Path.Combine(

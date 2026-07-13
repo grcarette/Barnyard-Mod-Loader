@@ -47,6 +47,7 @@ public sealed class ModEntry
     [JsonPropertyName("downloads")] public long Downloads { get; set; }
     [JsonPropertyName("upvotes")] public int Upvotes { get; set; }
     [JsonPropertyName("tags")] public List<string> Tags { get; set; } = new();
+    [JsonPropertyName("conflicts")] public List<string> Conflicts { get; set; } = new();
     [JsonPropertyName("versions")] public List<ModVersionInfo> Versions { get; set; } = new();
 
     public ModVersionInfo? Latest() =>
@@ -76,8 +77,12 @@ public sealed class InstalledMod
     public int Revision { get; set; }
     public bool Enabled { get; set; } = true;
     public bool InstalledAsDependency { get; set; }
+    /// <summary>Installed from a local file; unknown to the server.</summary>
+    public bool IsLocal { get; set; }
+    public string Description { get; set; } = "";
     public List<string> RelativeFiles { get; set; } = new();
     public Dictionary<string, string> Dependencies { get; set; } = new();
+    public List<string> Conflicts { get; set; } = new();
 }
 
 public enum InstallActionKind { Install, Upgrade }

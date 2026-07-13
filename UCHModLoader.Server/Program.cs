@@ -101,6 +101,7 @@ app.MapGet("/api/index", async (HttpRequest request, IConfiguration config, Mong
             downloads = x.Mod.Downloads,
             upvotes = x.Mod.UpvoterDiscordIds.Count,
             tags = x.Mod.Tags,
+            conflicts = x.Mod.Conflicts,
             versions = x.Versions.Select(v => new
             {
                 version = v.Version,
@@ -328,8 +329,24 @@ app.MapPost("/api/mods/{modId}/generatekey", async (string modId, HttpRequest re
     if (!mod.IsPrivate)
         return Results.BadRequest("This mod is public — keys are only for private mods.");
 
+    var multiUse = false;
+    if (request.HasFormContentType)
+    {
+        var form = await request.ReadFormAsync();
+        multiUse = form["multiUse"] == "true";
+    }
+
     var raw = Convert.ToHexString(RandomNumberGenerator.GetBytes(8));
     var key = $"{raw[..4]}-{raw[4..8]}-{raw[8..12]}-{raw[12..]}";
+
+    if (multiUse)
+    {
+        var expiresUtc = DateTime.UtcNow.AddHours(48);
+        await db.Mods.UpdateOneAsync(m => m.ModId == modId,
+            Builders<ModDoc>.Update.Push(m => m.MultiUseKeys,
+                new MultiUseKey { Key = key, ExpiresUtc = expiresUtc }));
+        return Results.Json(new { modId, key, expiresUtc });
+    }
 
     await db.Mods.UpdateOneAsync(m => m.ModId == modId,
         Builders<ModDoc>.Update.AddToSet(m => m.PrivateKeys, key));
@@ -350,12 +367,32 @@ app.MapPost("/api/mods/redeemkey", async (HttpRequest request, MongoContext db) 
 
     var mod = await db.Mods.Find(
         Builders<ModDoc>.Filter.AnyEq(m => m.PrivateKeys, key)).FirstOrDefaultAsync();
+    if (mod is not null)
+    {
+        // One-time key: consumed on redemption.
+        await db.Mods.UpdateOneAsync(m => m.ModId == mod.ModId,
+            Builders<ModDoc>.Update
+                .Pull(m => m.PrivateKeys, key)
+                .AddToSet(m => m.AuthorizedDiscordIds, user.DiscordId));
+        return Results.Json(new { modId = mod.ModId, name = mod.Name });
+    }
+
+    // Multi-use key: stays valid until it expires.
+    mod = await db.Mods.Find(
+        Builders<ModDoc>.Filter.ElemMatch(m => m.MultiUseKeys, k => k.Key == key))
+        .FirstOrDefaultAsync();
     if (mod is null) return Results.BadRequest("Invalid or already-used key.");
 
+    var entry = mod.MultiUseKeys.First(k => k.Key == key);
+    if (entry.ExpiresUtc < DateTime.UtcNow)
+    {
+        await db.Mods.UpdateOneAsync(m => m.ModId == mod.ModId,
+            Builders<ModDoc>.Update.PullFilter(m => m.MultiUseKeys, k => k.Key == key));
+        return Results.BadRequest("This key has expired.");
+    }
+
     await db.Mods.UpdateOneAsync(m => m.ModId == mod.ModId,
-        Builders<ModDoc>.Update
-            .Pull(m => m.PrivateKeys, key)
-            .AddToSet(m => m.AuthorizedDiscordIds, user.DiscordId));
+        Builders<ModDoc>.Update.AddToSet(m => m.AuthorizedDiscordIds, user.DiscordId));
 
     return Results.Json(new { modId = mod.ModId, name = mod.Name });
 });
@@ -578,7 +615,13 @@ app.MapGet("/api/auth/discord/callback", async (string code, string? state, ICon
     meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     using var meJson = JsonDocument.Parse(await (await http.SendAsync(meRequest)).Content.ReadAsStringAsync());
     var discordId = meJson.RootElement.GetProperty("id").GetString() ?? "";
-    var username = meJson.RootElement.GetProperty("username").GetString() ?? "";
+    // Prefer the account-wide display name ("global_name"); accounts that
+    // never set one fall back to the unique username.
+    var username = meJson.RootElement.TryGetProperty("global_name", out var gn) &&
+                   gn.ValueKind == JsonValueKind.String &&
+                   !string.IsNullOrWhiteSpace(gn.GetString())
+        ? gn.GetString()!
+        : meJson.RootElement.GetProperty("username").GetString() ?? "";
     var avatarHash = meJson.RootElement.TryGetProperty("avatar", out var av) ? av.GetString() : null;
     var avatarUrl = avatarHash is null
         ? $"https://cdn.discordapp.com/embed/avatars/{(ulong.TryParse(discordId, out var did) ? (did >> 22) % 6 : 0)}.png"
@@ -668,7 +711,7 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
     if (!request.HasFormContentType) return Results.BadRequest("Expected multipart form data.");
     var form = await request.ReadFormAsync();
 
-    var update = Builders<ModDoc>.Update.Set(m => m.Name, mod.Name); // no-op base
+    var updates = new List<UpdateDefinition<ModDoc>>();
 
     var newName = form["name"].ToString().Trim();
     if (!string.IsNullOrEmpty(newName) && !string.Equals(newName, mod.Name, StringComparison.Ordinal))
@@ -685,12 +728,12 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
         if (collision is not null)
             return Results.BadRequest($"The name '{newName}' is already taken by another mod.");
 
-        update = update.Set(m => m.Name, newName);
+        updates.Add(Builders<ModDoc>.Update.Set(m => m.Name, newName));
     }
 
     var description = form["description"].ToString().Trim();
     if (!string.IsNullOrEmpty(description))
-        update = update.Set(m => m.Description, description);
+        updates.Add(Builders<ModDoc>.Update.Set(m => m.Description, description));
 
     if (form.ContainsKey("tags") && !string.IsNullOrWhiteSpace(form["tags"]))
     {
@@ -708,7 +751,59 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
             if (!ModTags.IsValid(tag))
                 return Results.BadRequest($"Unknown tag '{tag}'. Allowed: {string.Join(", ", ModTags.All)}.");
         }
-        update = update.Set(m => m.Tags, newTags.Select(ModTags.Canonical).Distinct().ToList());
+        updates.Add(Builders<ModDoc>.Update.Set(m => m.Tags,
+            newTags.Select(ModTags.Canonical).Distinct().ToList()));
+    }
+
+    // Dependencies apply to the latest revision (the one new installs receive).
+    if (form.ContainsKey("dependencies"))
+    {
+        Dictionary<string, string> newDeps;
+        try
+        {
+            newDeps = string.IsNullOrWhiteSpace(form["dependencies"])
+                ? new Dictionary<string, string>()
+                : JsonSerializer.Deserialize<Dictionary<string, string>>(form["dependencies"]!)
+                  ?? new Dictionary<string, string>();
+        }
+        catch { return Results.BadRequest("dependencies must be a JSON object of id → constraint."); }
+
+        foreach (var depId in newDeps.Keys)
+        {
+            if (string.Equals(depId, modId, StringComparison.OrdinalIgnoreCase))
+                return Results.BadRequest("A mod cannot depend on itself.");
+            var depExists = await db.Mods.Find(m => m.ModId == depId).AnyAsync();
+            if (!depExists) return Results.BadRequest($"Dependency '{depId}' does not exist in the database.");
+        }
+
+        var latest = mod.Versions.OrderByDescending(v => v.Revision).FirstOrDefault();
+        if (latest is not null)
+        {
+            latest.Dependencies = newDeps;
+            updates.Add(Builders<ModDoc>.Update.Set(m => m.Versions, mod.Versions));
+        }
+    }
+
+    if (form.ContainsKey("conflicts"))
+    {
+        List<string> newConflicts;
+        try
+        {
+            newConflicts = string.IsNullOrWhiteSpace(form["conflicts"])
+                ? new List<string>()
+                : JsonSerializer.Deserialize<List<string>>(form["conflicts"]!) ?? new List<string>();
+        }
+        catch { return Results.BadRequest("conflicts must be a JSON array of mod ids."); }
+
+        newConflicts = newConflicts.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var conflictId in newConflicts)
+        {
+            if (string.Equals(conflictId, modId, StringComparison.OrdinalIgnoreCase))
+                return Results.BadRequest("A mod cannot conflict with itself.");
+            var conflictExists = await db.Mods.Find(m => m.ModId == conflictId).AnyAsync();
+            if (!conflictExists) return Results.BadRequest($"Conflict '{conflictId}' does not exist in the database.");
+        }
+        updates.Add(Builders<ModDoc>.Update.Set(m => m.Conflicts, newConflicts));
     }
 
     var iconFile = form.Files.GetFile("icon");
@@ -723,7 +818,7 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
             return Results.BadRequest("Icon could not be read as an image.");
 
         var newIconId = await db.Files.UploadFromBytesAsync($"{modId}-icon.png", normalized);
-        update = update.Set(m => m.IconFileId, newIconId);
+        updates.Add(Builders<ModDoc>.Update.Set(m => m.IconFileId, newIconId));
 
         if (mod.IconFileId is not null)
         {
@@ -731,8 +826,10 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
         }
     }
 
-    await db.Mods.UpdateOneAsync(m => m.ModId == modId, update);
-    return Results.Json(new { id = modId, updated = true });
+    if (updates.Count > 0)
+        await db.Mods.UpdateOneAsync(m => m.ModId == modId,
+            Builders<ModDoc>.Update.Combine(updates));
+    return Results.Json(new { id = modId, updated = updates.Count > 0 });
 });
 
 // ---------- Upload (new mod, or update with replacement) ----------
@@ -807,6 +904,19 @@ app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration confi
             return Results.BadRequest($"Unknown tag '{tag}'. Allowed: {string.Join(", ", ModTags.All)}.");
     }
     tags = tags.Select(ModTags.Canonical).Distinct().ToList();
+
+    // Conflicts: omitted field on an update means "keep existing".
+    var conflictsProvided = form.ContainsKey("conflicts");
+    var conflicts = new List<string>();
+    if (conflictsProvided && !string.IsNullOrWhiteSpace(form["conflicts"]))
+    {
+        try
+        {
+            conflicts = JsonSerializer.Deserialize<List<string>>(form["conflicts"]!) ?? new List<string>();
+        }
+        catch { return Results.BadRequest("conflicts must be a JSON array of mod ids."); }
+    }
+    conflicts = conflicts.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     var isZip = modFile.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
     PluginInfo? plugin = null;
@@ -901,12 +1011,23 @@ app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration confi
     if (!tagsProvided && existing is not null)
         tags = new List<string>(existing.Tags);
 
+    if (!conflictsProvided && existing is not null)
+        conflicts = new List<string>(existing.Conflicts);
+
     foreach (var depId in dependencies.Keys)
     {
         if (string.Equals(depId, plugin.Guid, StringComparison.OrdinalIgnoreCase))
             return Results.BadRequest("A mod cannot depend on itself.");
         var depExists = await db.Mods.Find(m => m.ModId == depId).AnyAsync();
         if (!depExists) return Results.BadRequest($"Dependency '{depId}' does not exist in the database.");
+    }
+
+    foreach (var conflictId in conflicts)
+    {
+        if (string.Equals(conflictId, plugin.Guid, StringComparison.OrdinalIgnoreCase))
+            return Results.BadRequest("A mod cannot conflict with itself.");
+        var conflictExists = await db.Mods.Find(m => m.ModId == conflictId).AnyAsync();
+        if (!conflictExists) return Results.BadRequest($"Conflict '{conflictId}' does not exist in the database.");
     }
 
     byte[] packagedZip;
@@ -983,6 +1104,7 @@ app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration confi
             OwnerDiscordId = user.DiscordId,
             IconFileId = iconFileId,
             Tags = tags,
+            Conflicts = conflicts,
             IsPrivate = isPrivateProvided ?? false,
             Versions = { versionDoc },
         });
@@ -1005,6 +1127,7 @@ app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration confi
                 .Set(m => m.Description, string.IsNullOrEmpty(description) ? existing.Description : description)
                 .Set(m => m.IconFileId, iconFileId)
                 .Set(m => m.Tags, tags)
+                .Set(m => m.Conflicts, conflicts)
                 .Set(m => m.IsPrivate, isPrivateProvided ?? existing.IsPrivate)
                 .Set(m => m.Versions, kept));
     }

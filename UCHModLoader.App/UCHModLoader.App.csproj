@@ -16,6 +16,7 @@
     <Content Include="Barnyard.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <AvaloniaResource Include="Assets\**"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.1.3" />

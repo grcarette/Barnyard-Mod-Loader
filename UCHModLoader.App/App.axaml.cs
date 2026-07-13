@@ -24,6 +24,10 @@ public partial class App : Application
 
             var settings = AppSettings.Load();
 
+            RequestedThemeVariant = settings.DarkMode
+                ? Avalonia.Styling.ThemeVariant.Dark
+                : Avalonia.Styling.ThemeVariant.Light;
+
             // Server URL set in settings → use the live server (index + packs).
             // No server configured yet → mock repository so the app stays usable.
             IModRepository repository;

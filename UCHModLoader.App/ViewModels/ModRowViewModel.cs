@@ -22,6 +22,9 @@ public partial class ModRowViewModel : ObservableObject
 
     [ObservableProperty] private bool _isEnabled;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _hasConflict;
+    [ObservableProperty] private string _conflictTooltip = "";
+    public IReadOnlyList<string> ConflictIds { get; init; } = Array.Empty<string>();
     [ObservableProperty] private Bitmap? _icon;
     [ObservableProperty] private int _upvotes;
     [ObservableProperty] private bool _hasVoted;
@@ -36,6 +39,9 @@ public partial class ModRowViewModel : ObservableObject
     public IReadOnlyList<VersionOptionViewModel> VersionHistory { get; init; } =
         Array.Empty<VersionOptionViewModel>();
     public bool HasVersionHistory => VersionHistory.Count > 1;
+
+    /// <summary>Card title shrinks for long names so it never crowds the stats row.</summary>
+    public double CardNameFontSize => UiText.FitFontSize(Name, 13, 18, 9.5);
 
     public bool IsInstalled => !string.IsNullOrEmpty(InstalledVersion);
     public bool HasTags => Tags.Count > 0;

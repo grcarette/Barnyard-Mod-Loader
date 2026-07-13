@@ -159,9 +159,79 @@ public sealed class InstallManager : IInstallManager
                 InstalledAsDependency = action.IsDependency,
                 RelativeFiles = installedFiles,
                 Dependencies = new Dictionary<string, string>(action.TargetVersion.Dependencies),
+                Conflicts = new List<string>(action.Mod.Conflicts),
             });
             SaveState();
         }
+    }
+
+    public async Task<InstalledMod> InstallLocalAsync(string sourcePath, string displayName,
+        string description, GameInstall game)
+    {
+        PluginInfo? plugin;
+        var isZip = sourcePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+        if (isZip)
+        {
+            plugin = null;
+            using var probe = ZipFile.OpenRead(sourcePath);
+            foreach (var entry in probe.Entries.Where(e =>
+                e.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+            {
+                using var ms = new MemoryStream();
+                await entry.Open().CopyToAsync(ms);
+                ms.Position = 0;
+                plugin = DllInspector.Inspect(ms);
+                if (plugin is not null) break;
+            }
+        }
+        else
+        {
+            await using var fs = File.OpenRead(sourcePath);
+            plugin = DllInspector.Inspect(fs);
+        }
+
+        if (plugin is null)
+            throw new InvalidDataException("No [BepInPlugin] attribute found — is this a BepInEx plugin?");
+
+        var name = string.IsNullOrWhiteSpace(displayName) ? plugin.Name : displayName.Trim();
+        var folderName = ModNaming.ToFolderName(name, plugin.Guid);
+
+        // Replace any existing install of the same plugin (local or server).
+        await UninstallFilesOnlyAsync(plugin.Guid, game);
+
+        List<string> installedFiles;
+        if (isZip)
+        {
+            await using var zipStream = File.OpenRead(sourcePath);
+            installedFiles = ExtractModZip(zipStream, folderName, game);
+        }
+        else
+        {
+            var modRoot = Path.Combine(game.PluginsDirectory, folderName);
+            Directory.CreateDirectory(modRoot);
+            var destination = Path.Combine(modRoot, Path.GetFileName(sourcePath));
+            File.Copy(sourcePath, destination, overwrite: true);
+            installedFiles = new List<string>
+            {
+                Path.GetRelativePath(game.GameDirectory, destination),
+            };
+        }
+
+        var mod = new InstalledMod
+        {
+            Id = plugin.Guid,
+            Name = name,
+            FolderName = folderName,
+            Version = plugin.Version,
+            Enabled = true,
+            IsLocal = true,
+            Description = description,
+            RelativeFiles = installedFiles,
+        };
+        _installed.RemoveAll(m => string.Equals(m.Id, plugin.Guid, StringComparison.OrdinalIgnoreCase));
+        _installed.Add(mod);
+        SaveState();
+        return mod;
     }
 
     private static List<string> ExtractModZip(Stream zipStream, string folderName, GameInstall game)
@@ -185,6 +255,121 @@ public sealed class InstallManager : IInstallManager
         }
         return files;
     }
+
+    /// <summary>
+    /// Finds mods already sitting in BepInEx/plugins that Barnyard doesn't
+    /// track, matches them to the index by BepInPlugin GUID, renames their
+    /// folders to Barnyard's naming scheme, and registers them as installed.
+    /// Mods the server doesn't know become local mods. Returns how many mods
+    /// were adopted.
+    /// </summary>
+    public int AdoptExistingMods(ModIndex index, GameInstall game)
+    {
+        var pluginsDir = game.PluginsDirectory;
+        if (!Directory.Exists(pluginsDir)) return 0;
+
+        var trackedFiles = new HashSet<string>(
+            _installed.SelectMany(m => m.RelativeFiles), StringComparer.OrdinalIgnoreCase);
+        var adopted = 0;
+
+        // Snapshot first: adoption renames folders while we iterate.
+        var dllPaths = Directory.EnumerateFiles(pluginsDir, "*.dll", SearchOption.AllDirectories).ToList();
+        foreach (var dllPath in dllPaths)
+        {
+            if (!File.Exists(dllPath)) continue; // moved by an earlier adoption
+            var relative = Path.GetRelativePath(game.GameDirectory, dllPath);
+            if (trackedFiles.Contains(relative)) continue;
+
+            PluginInfo? info;
+            try
+            {
+                using var fs = File.OpenRead(dllPath);
+                info = DllInspector.Inspect(fs);
+            }
+            catch { continue; }
+            if (info is null) continue;
+            if (_installed.Any(m => string.Equals(m.Id, info.Guid, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            // Known on the server → adopt as a normal install; unknown → adopt
+            // as a local mod so it's still tracked and manageable.
+            var entry = index.Find(info.Guid);
+            var displayName = entry?.Name ?? (string.IsNullOrWhiteSpace(info.Name) ? info.Guid : info.Name);
+
+            var folderName = ModNaming.ToFolderName(displayName, info.Guid);
+            var targetRoot = Path.Combine(pluginsDir, folderName);
+            var parent = Path.GetDirectoryName(dllPath)!;
+            string modRoot;
+            try
+            {
+                if (PathsEqual(parent, pluginsDir))
+                {
+                    // Loose dll in the plugins root: move it into its own folder.
+                    Directory.CreateDirectory(targetRoot);
+                    var destination = Path.Combine(targetRoot, Path.GetFileName(dllPath));
+                    if (File.Exists(destination)) continue;
+                    File.Move(dllPath, destination);
+                    modRoot = targetRoot;
+                }
+                else
+                {
+                    // Rename the mod's top-level folder under plugins.
+                    var top = parent;
+                    while (!PathsEqual(Path.GetDirectoryName(top)!, pluginsDir))
+                        top = Path.GetDirectoryName(top)!;
+
+                    if (PathsEqual(top, targetRoot))
+                    {
+                        modRoot = top;
+                    }
+                    else if (!Directory.Exists(targetRoot))
+                    {
+                        Directory.Move(top, targetRoot);
+                        modRoot = targetRoot;
+                    }
+                    else
+                    {
+                        modRoot = top; // name taken; adopt in place
+                    }
+                }
+            }
+            catch { continue; }
+
+            var files = Directory.EnumerateFiles(modRoot, "*", SearchOption.AllDirectories)
+                .Select(f => Path.GetRelativePath(game.GameDirectory, f))
+                .ToList();
+
+            var matchingVersion = entry?.Versions.FirstOrDefault(v =>
+                string.Equals(v.Version, info.Version, StringComparison.OrdinalIgnoreCase));
+
+            _installed.Add(new InstalledMod
+            {
+                Id = info.Guid,
+                Name = displayName,
+                FolderName = Path.GetFileName(modRoot),
+                Version = info.Version,
+                Revision = matchingVersion?.Revision ?? 0,
+                Enabled = true,
+                IsLocal = entry is null,
+                RelativeFiles = files,
+                Dependencies = new Dictionary<string, string>(
+                    matchingVersion?.Dependencies
+                    ?? entry?.Latest()?.Dependencies
+                    ?? new Dictionary<string, string>()),
+                Conflicts = entry is null ? new List<string>() : new List<string>(entry.Conflicts),
+            });
+            trackedFiles.UnionWith(files);
+            adopted++;
+        }
+
+        if (adopted > 0) SaveState();
+        return adopted;
+    }
+
+    private static bool PathsEqual(string a, string b) =>
+        string.Equals(Path.GetFullPath(a).TrimEnd(Path.DirectorySeparatorChar),
+                      Path.GetFullPath(b).TrimEnd(Path.DirectorySeparatorChar),
+                      StringComparison.OrdinalIgnoreCase);
 
     public async Task UninstallAsync(string modId, GameInstall game)
     {

@@ -50,8 +50,8 @@ The sidebar has four tabs. Installed shows what you have and lets you
 enable/disable things or check for updates. Browse is where you find and
 install new mods. The profile button in the top left lets you set up different
 sets of mods and switch between them (a "chaos night with friends" profile vs
-a "normal" one, for example). Installing a mod pack from Browse creates a
-profile for it automatically.
+a "normal" one, for example). Installing a mod pack from Browse adds its mods
+to your current profile.
 
 Launch game is always in the top right.
 
@@ -61,7 +61,7 @@ Log in with Discord (top left), then go to the Upload tab. You can upload any
 BepInEx plugin as a .dll or .zip, give it a name, icon, description, and tags,
 and push updates later without worrying about version numbers. There's also an
 option to make a mod private and share it with specific people using one-time
-keys.
+keys, or a shareable multi-use key that expires after 48 hours.
 
 Uploads from new accounts get reviewed before they show up publicly. After
 your first approval you're verified and future uploads go live immediately.

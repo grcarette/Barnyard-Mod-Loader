@@ -2,7 +2,10 @@ using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Styling;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UCHModLoader.App.Services;
@@ -19,6 +22,7 @@ public partial class MainWindowViewModel : ObservableObject
     private const string AllTagsOption = "All tags";
     public const string SortMostDownloaded = "Most downloaded";
     public const string SortMostUpvoted = "Most upvoted";
+    public const string SortNewest = "Newest";
     public const string SortName = "Name (A–Z)";
 
     private readonly IGameLocator _gameLocator;
@@ -60,6 +64,40 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private bool _showAllInstalledMods;
     [ObservableProperty] private bool _showOnlyUninstalledBrowseMods;
     [ObservableProperty] private bool _showBepInExConsole;
+    [ObservableProperty] private bool _isDarkMode;
+    [ObservableProperty] private bool _autoUpdateMods;
+    [ObservableProperty] private bool _isRedeemingKey;
+    [ObservableProperty] private string _toastMessage = "";
+    [ObservableProperty] private bool _isToastVisible;
+    [ObservableProperty] private bool _isSetupVisible;
+    [ObservableProperty] private double _setupOpacity = 1;
+    [ObservableProperty] private string _setupStatus = "";
+    [ObservableProperty] private string _setupStage = "Loading";
+    private bool _showLaunchOptionsAfterSetup;
+
+    [ObservableProperty] private string _setupSyncedText = "";
+
+    public bool IsSetupLoading => SetupStage == "Loading";
+    public bool IsSetupSynced => SetupStage == "Synced";
+    public bool IsSetupChoice => SetupStage == "Choice";
+    public bool IsSetupCompetitive => SetupStage == "Competitive";
+    /// <summary>The logo only decorates the first (loading/synced) screen.</summary>
+    public bool IsSetupLogoVisible => IsSetupLoading || IsSetupSynced;
+
+    partial void OnSetupStageChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsSetupLoading));
+        OnPropertyChanged(nameof(IsSetupSynced));
+        OnPropertyChanged(nameof(IsSetupChoice));
+        OnPropertyChanged(nameof(IsSetupCompetitive));
+        OnPropertyChanged(nameof(IsSetupLogoVisible));
+    }
+
+    private readonly DispatcherTimer _toastTimer;
+
+    // Mods disabled while viewing the profile filter stay listed until the
+    // user navigates away — otherwise the row vanishes mid-click.
+    private readonly HashSet<string> _retainedInstalledIds = new(StringComparer.OrdinalIgnoreCase);
 
     public ObservableCollection<ModRowViewModel> InstalledMods { get; } = new();
     public ObservableCollection<ModRowViewModel> DisplayedInstalledMods { get; } = new();
@@ -81,10 +119,10 @@ public partial class MainWindowViewModel : ObservableObject
     public bool HasPacks => Packs.Count > 0;
 
     public string InstalledViewButtonText =>
-        ShowAllInstalledMods ? "Show Profile Mods" : "Show All Mods";
+        ShowAllInstalledMods ? "Show profile" : "Show all";
 
     public string BrowseViewButtonText =>
-        ShowOnlyUninstalledBrowseMods ? "Show All Mods" : "Show Uninstalled Mods";
+        ShowOnlyUninstalledBrowseMods ? "Show all" : "Show uninstalled";
 
     public bool IsBrowseGridVisible => IsBrowseTab && SelectedBrowseMod is null && SelectedPack is null;
     public bool IsBrowseDetailVisible => IsBrowseTab && SelectedBrowseMod is not null;
@@ -141,6 +179,48 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    partial void OnIsDarkModeChanged(bool value)
+    {
+        _settings.DarkMode = value;
+        _settings.Save();
+        if (Application.Current is not null)
+            Application.Current.RequestedThemeVariant =
+                value ? ThemeVariant.Dark : ThemeVariant.Light;
+    }
+
+    partial void OnAutoUpdateModsChanged(bool value)
+    {
+        _settings.AutoUpdateMods = value;
+        _settings.Save();
+    }
+
+    partial void OnStatusMessageChanged(string value) => ShowToast(value);
+
+    private void ShowToast(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        if (IsSetupVisible) return; // the setup screen shows its own status
+        ToastMessage = message;
+        IsToastVisible = true;
+        _toastTimer.Stop();
+        _toastTimer.Start();
+    }
+
+    [RelayCommand]
+    private void DismissToast()
+    {
+        _toastTimer.Stop();
+        IsToastVisible = false;
+    }
+
+    [ObservableProperty] private bool _isLicensePopupVisible;
+
+    [RelayCommand]
+    private void ShowLicense() => IsLicensePopupVisible = true;
+
+    [RelayCommand]
+    private void DismissLicense() => IsLicensePopupVisible = false;
+
     partial void OnShowOnlyUninstalledBrowseModsChanged(bool value)
     {
         OnPropertyChanged(nameof(BrowseViewButtonText));
@@ -157,6 +237,10 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _settings = settings;
         _showBepInExConsole = settings.ShowBepInExConsole;
+        _isDarkMode = settings.DarkMode;
+        _autoUpdateMods = settings.AutoUpdateMods;
+        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); IsToastVisible = false; };
         _gameLocator = gameLocator;
         _bepInEx = bepInEx;
         _repository = repository;
@@ -164,27 +248,48 @@ public partial class MainWindowViewModel : ObservableObject
         _launcher = launcher;
         Upload = uploadViewModel;
         Upload.UploadSucceeded += async (_, _) => await RefreshAfterUploadAsync();
+        // Upload status lines used to hide at the bottom of the page; surface
+        // them in the same toast as everything else.
+        Upload.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(UploadViewModel.Status)) ShowToast(Upload.Status);
+        };
+        Upload.LocalInstallHandler = async (path, name, description) =>
+        {
+            if (_game is null) return "Game not found — set the game folder in Settings first.";
+            try
+            {
+                var mod = await _installManager.InstallLocalAsync(path, name, description, _game);
+                SyncActiveProfileFromInstalled();
+                RefreshLists();
+                StatusMessage = $"Installed local mod {mod.Name}";
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return $"Local install failed: {ex.Message}";
+            }
+        };
 
         TagFilterOptions.Add(AllTagsOption);
         foreach (var tag in ModTags.All) TagFilterOptions.Add(tag);
         SortOptions.Add(SortMostDownloaded);
         SortOptions.Add(SortMostUpvoted);
+        SortOptions.Add(SortNewest);
         SortOptions.Add(SortName);
     }
 
     public async Task InitializeAsync()
     {
-        _game = !string.IsNullOrWhiteSpace(_settings.GamePathOverride) &&
-                Directory.Exists(_settings.GamePathOverride)
-            ? SteamGameLocator.DescribeInstall(_settings.GamePathOverride)
-            : _gameLocator.FindGame();
-        GamePathInput = _settings.GamePathOverride;
-        GameFound = _game is not null;
-        GameStatus = GameFound ? "Game found" : "Game not found";
-        GamePath = _game?.GameDirectory ?? "";
+        // TESTING: always run setup, even if settings.json says it completed.
+        // Restore the check to make it first-run only:
+        // if (!_settings.SetupCompleted)
+        {
+            await RunFirstTimeSetupAsync();
+            return;
+        }
 
-        if (_game is not null)
-            LaunchOptionsText = _bepInEx.GetRequiredLaunchOptions(_game) ?? "";
+        LocateGame();
 
         if (_game is not null && !CheckBepInExInstalled())
             IsBepInExPromptVisible = true;
@@ -207,12 +312,144 @@ public partial class MainWindowViewModel : ObservableObject
         _ = CheckLoaderUpdateAsync();
 
         var updates = InstalledMods.Count(m => m.UpdateAvailable);
-        if (updates > 0)
+        if (updates > 0 && AutoUpdateMods)
+        {
+            StatusMessage = $"Auto-updating {updates} mod{(updates == 1 ? "" : "s")}…";
+            await UpdateAllAsync();
+        }
+        else if (updates > 0)
+        {
             StatusMessage = $"{updates} of your installed mods need an update";
+        }
         if (restored > 0)
             StatusMessage = restored == 1
                 ? $"Restored 1 missing mod from profile '{ActiveProfileName}'"
                 : $"Restored {restored} missing mods from profile '{ActiveProfileName}'";
+    }
+
+    private void LocateGame()
+    {
+        _game = !string.IsNullOrWhiteSpace(_settings.GamePathOverride) &&
+                Directory.Exists(_settings.GamePathOverride)
+            ? SteamGameLocator.DescribeInstall(_settings.GamePathOverride)
+            : _gameLocator.FindGame();
+        GamePathInput = _settings.GamePathOverride;
+        GameFound = _game is not null;
+        GameStatus = GameFound ? "Game found" : "Game not found";
+        GamePath = _game?.GameDirectory ?? "";
+
+        if (_game is not null)
+            LaunchOptionsText = _bepInEx.GetRequiredLaunchOptions(_game) ?? "";
+    }
+
+    /// <summary>
+    /// First-run experience: locate the game, install BepInEx silently, adopt
+    /// any mods already in the plugins folder, then ask what Barnyard is for.
+    /// </summary>
+    private async Task RunFirstTimeSetupAsync()
+    {
+        IsSetupVisible = true;
+        SetupStage = "Loading";
+        SetupStatus = "Locating game folder…";
+        await Task.Delay(1200); // let each status line register
+
+        LocateGame();
+
+        var installedBepInEx = false;
+        if (_game is not null && !CheckBepInExInstalled())
+        {
+            SetupStatus = "Installing BepInEx…";
+            try
+            {
+                await _bepInEx.InstallAsync(_game, _bepInEx.GetDefaultDownloadUrl(_game));
+                BepInExStatus = "BepInEx installed";
+                installedBepInEx = true;
+            }
+            catch { /* the regular prompt can retry after setup */ }
+        }
+        _showLaunchOptionsAfterSetup = installedBepInEx && !string.IsNullOrEmpty(LaunchOptionsText);
+
+        SetupStatus = "Syncing mods…";
+        await Task.Delay(500);
+        VerifyInstallations(silent: true);
+        await RefreshIndexAsync();
+        await LoadMyVotesAsync();
+
+        // Adopt mods the player installed by hand before Barnyard existed.
+        if (_game is not null && _index is not null)
+        {
+            try { _installManager.AdoptExistingMods(_index, _game); } catch { }
+        }
+
+        // First-run premise: everything currently installed is the player's
+        // starting set. Enable it all so the sync lands in the default
+        // profile (the merge below only picks up enabled mods).
+        if (_game is not null)
+        {
+            foreach (var mod in _installManager.GetInstalled().Where(m => !m.Enabled).ToList())
+            {
+                try { _installManager.SetEnabled(mod.Id, true, _game); } catch { }
+            }
+        }
+
+        ActiveProfileName = _profiles.ActiveProfileName;
+        MergeProfileWithReality(_profiles.Active);
+
+        // Synced mods always land in the default profile, even if another
+        // profile happens to be active.
+        var defaultProfile = _profiles.Profiles.FirstOrDefault(p =>
+            string.Equals(p.Name, ProfileService.DefaultProfileName, StringComparison.OrdinalIgnoreCase));
+        if (defaultProfile is not null && !ReferenceEquals(defaultProfile, _profiles.Active))
+            MergeProfileWithReality(defaultProfile);
+
+        _profiles.Save();
+        RefreshLists();
+        RefreshProfileRows();
+        _ = CheckLoaderUpdateAsync();
+        await Task.Delay(800);
+
+        var synced = InstalledMods.Count;
+        SetupSyncedText = synced == 1 ? "1 mod synced" : $"{synced} mods synced";
+        SetupStage = "Synced";
+    }
+
+    [RelayCommand]
+    private void SetupContinue() => SetupStage = "Choice";
+
+    [RelayCommand]
+    private Task SetupChooseOther() => FinishSetupAsync();
+
+    [RelayCommand]
+    private void SetupChooseCompetitive() => SetupStage = "Competitive";
+
+    [RelayCommand]
+    private async Task SetupInstallCompetitiveAsync()
+    {
+        var pack = Packs.FirstOrDefault(p =>
+            p.Name.Contains("competitive", StringComparison.OrdinalIgnoreCase));
+        if (pack is not null && _game is not null && _index is not null)
+        {
+            SetupStage = "Loading";
+            SetupStatus = "Installing the competitive mod pack…";
+            await InstallPackAsync(pack);
+        }
+        await FinishSetupAsync();
+    }
+
+    [RelayCommand]
+    private Task SetupSkipCompetitive() => FinishSetupAsync();
+
+    private async Task FinishSetupAsync()
+    {
+        // TESTING: setup runs on every launch. Restore these two lines to make
+        // it first-run only.
+        // _settings.SetupCompleted = true;
+        // _settings.Save();
+        SetupOpacity = 0;           // fades via the panel's opacity transition
+        await Task.Delay(500);
+        IsSetupVisible = false;
+        if (_showLaunchOptionsAfterSetup)
+            IsLaunchOptionsPromptVisible = true;
     }
 
     private async Task RefreshAfterUploadAsync()
@@ -242,19 +479,32 @@ public partial class MainWindowViewModel : ObservableObject
             Packs.Clear();
             foreach (var pack in await _repository.GetPacksAsync())
             {
-                Packs.Add(new ModPackViewModel
+                var packVm = new ModPackViewModel
                 {
                     Id = pack.Id,
                     Name = pack.Name,
                     Description = pack.Description,
                     ModIds = pack.ModIds,
-                    ModNames = pack.ModIds
-                        .Select(id => _index?.Find(id)?.Name ?? id)
-                        .ToList(),
                     IconUrl = pack.IconUrl,
                     IconVersion = pack.IconVersion,
                     Pack = pack,
-                });
+                };
+                foreach (var modId in pack.ModIds)
+                {
+                    var packEntry = _index?.Find(modId);
+                    packVm.Mods.Add(new ModRowViewModel
+                    {
+                        Id = modId,
+                        Name = packEntry?.Name ?? modId,
+                        Author = packEntry?.Author ?? "",
+                        Description = packEntry?.Description ?? "",
+                        LatestVersion = packEntry?.Latest()?.Version ?? "",
+                        IconUrl = packEntry?.IconUrl,
+                        IconVersion = packEntry?.IconVersion,
+                        Entry = packEntry,
+                    });
+                }
+                Packs.Add(packVm);
             }
             if (openPackId is not null)
                 SelectedPack = Packs.FirstOrDefault(p =>
@@ -316,8 +566,9 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 Id = mod.Id,
                 Name = mod.Name,
-                Author = entry?.Author ?? "",
-                Description = entry?.Description ?? "",
+                Author = entry?.Author ?? (mod.IsLocal ? "local file" : ""),
+                Description = entry?.Description ?? mod.Description,
+                ConflictIds = entry?.Conflicts ?? mod.Conflicts,
                 InstalledVersion = mod.Version,
                 InstalledRevision = mod.Revision,
                 LatestVersion = entry?.Latest()?.Version ?? mod.Version,
@@ -394,8 +645,34 @@ public partial class MainWindowViewModel : ObservableObject
         _ = LoadIconsAsync();
     }
 
+    /// <summary>
+    /// Flags enabled installed mods that conflict with another enabled mod.
+    /// Conflict declarations are symmetric: either side declaring it counts.
+    /// </summary>
+    private void ComputeConflicts()
+    {
+        var enabled = InstalledMods.Where(m => m.IsEnabled).ToList();
+        foreach (var row in InstalledMods)
+        {
+            var conflicting = enabled
+                .Where(other =>
+                    !string.Equals(other.Id, row.Id, StringComparison.OrdinalIgnoreCase) &&
+                    (row.ConflictIds.Contains(other.Id, StringComparer.OrdinalIgnoreCase) ||
+                     other.ConflictIds.Contains(row.Id, StringComparer.OrdinalIgnoreCase)))
+                .Select(other => other.Name)
+                .ToList();
+
+            row.HasConflict = row.IsEnabled && conflicting.Count > 0;
+            row.ConflictTooltip = row.HasConflict
+                ? $"This mod conflicts with {string.Join(", ", conflicting)}. " +
+                  "You can launch the game anyway, but you may run into issues."
+                : "";
+        }
+    }
+
     private void ApplyInstalledFilter()
     {
+        ComputeConflicts();
         DisplayedInstalledMods.Clear();
 
         var profileIds = new HashSet<string>(
@@ -403,7 +680,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         foreach (var row in InstalledMods)
         {
-            if (!ShowAllInstalledMods && !profileIds.Contains(row.Id)) continue;
+            if (!ShowAllInstalledMods && !profileIds.Contains(row.Id) &&
+                !_retainedInstalledIds.Contains(row.Id)) continue;
 
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
@@ -443,6 +721,7 @@ public partial class MainWindowViewModel : ObservableObject
         mods = SelectedSortOption switch
         {
             SortMostUpvoted => mods.OrderByDescending(m => m.Upvotes).ThenByDescending(m => m.Downloads),
+            SortNewest => mods.OrderByDescending(m => m.Entry?.Latest()?.UploadedUtc ?? DateTime.MinValue),
             SortName => mods.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase),
             _ => mods.OrderByDescending(m => m.Downloads).ThenByDescending(m => m.Upvotes),
         };
@@ -453,7 +732,8 @@ public partial class MainWindowViewModel : ObservableObject
 
     private async Task LoadIconsAsync()
     {
-        var rows = AvailableMods.Concat(InstalledMods);
+        var rows = AvailableMods.Concat(InstalledMods)
+            .Concat(Packs.SelectMany(p => p.Mods));
         foreach (var row in rows.Where(r => r.Icon is null && !string.IsNullOrEmpty(r.IconUrl)).ToList())
         {
             row.Icon = await _iconCache.GetAsync(row.Id, row.IconVersion, row.IconUrl);
@@ -468,6 +748,13 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void SelectTab(string tab)
     {
+        // Navigating counts as a page reload: rows kept visible after being
+        // disabled can drop out of the profile view now.
+        if (_retainedInstalledIds.Count > 0)
+        {
+            _retainedInstalledIds.Clear();
+            ApplyInstalledFilter();
+        }
         SelectedTab = tab;
         if (tab != "Browse")
         {
@@ -769,6 +1056,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         _profiles.ActiveProfileName = profile.Name;
         ActiveProfileName = profile.Name;
+        _retainedInstalledIds.Clear();
 
         var restored = await EnsureProfileModsInstalledAsync(profile);
         ApplyProfile(profile);
@@ -832,25 +1120,14 @@ public partial class MainWindowViewModel : ObservableObject
                 installedCount++;
             }
 
-            // Create (or refresh) a profile named after the pack and switch to it.
-            var profile = _profiles.Profiles.FirstOrDefault(p =>
-                string.Equals(p.Name, pack.Name, StringComparison.OrdinalIgnoreCase));
-            if (profile is null)
-            {
-                profile = new Profile { Name = pack.Name };
-                _profiles.Profiles.Add(profile);
-            }
-            profile.EnabledModIds = pack.ModIds.ToList();
-            _profiles.ActiveProfileName = profile.Name;
-            ActiveProfileName = profile.Name;
-            ApplyProfile(profile);
-            _profiles.Save();
+            // The pack's mods join whatever profile is active.
+            SyncActiveProfileFromInstalled();
 
             RefreshLists();
             RefreshProfileRows();
             StatusMessage = skipped == 0
-                ? $"Installed pack '{pack.Name}' ({installedCount} mods) and switched to its profile"
-                : $"Installed pack '{pack.Name}' ({installedCount} mods, {skipped} no longer available) and switched to its profile";
+                ? $"Installed pack '{pack.Name}' ({installedCount} mods) to profile '{ActiveProfileName}'"
+                : $"Installed pack '{pack.Name}' ({installedCount} mods, {skipped} no longer available) to profile '{ActiveProfileName}'";
         }
         catch (Exception ex)
         {
@@ -878,6 +1155,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            IsRedeemingKey = true;
             using var request = new HttpRequestMessage(HttpMethod.Post,
                 $"{Upload.BaseUrl}/api/mods/redeemkey");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Upload.ApiToken);
@@ -913,6 +1191,10 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusMessage = $"Key redemption failed: {ex.Message}";
         }
+        finally
+        {
+            IsRedeemingKey = false;
+        }
     }
 
     [RelayCommand]
@@ -924,6 +1206,13 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        // Optimistic: flip immediately for instant feedback, then reconcile
+        // with (or roll back to) whatever the server says.
+        var votedBefore = row.HasVoted;
+        var upvotesBefore = row.Upvotes;
+        row.HasVoted = !votedBefore;
+        row.Upvotes = upvotesBefore + (row.HasVoted ? 1 : -1);
+
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post,
@@ -932,6 +1221,8 @@ public partial class MainWindowViewModel : ObservableObject
             var response = await ApiHttp.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                row.HasVoted = votedBefore;
+                row.Upvotes = upvotesBefore;
                 StatusMessage = "Vote failed — try logging in again on the Upload tab.";
                 return;
             }
@@ -943,6 +1234,8 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            row.HasVoted = votedBefore;
+            row.Upvotes = upvotesBefore;
             StatusMessage = $"Vote failed: {ex.Message}";
         }
     }
@@ -1080,7 +1373,7 @@ public partial class MainWindowViewModel : ObservableObject
             _installManager.SetEnabled(row.Id, true, _game);
             var deps = plan.DependencyActions.Count();
             StatusMessage = deps > 0
-                ? $"Installed {row.Name} (+{deps} dependenc{(deps == 1 ? "y" : "ies")})"
+                ? $"Installed {row.Name} and {deps} dependenc{(deps == 1 ? "y" : "ies")}"
                 : $"Installed {row.Name}";
             SyncActiveProfileFromInstalled();
         }
@@ -1123,6 +1416,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             var turningOn = !row.Installed!.Enabled;
+            if (!turningOn && !ShowAllInstalledMods)
+                _retainedInstalledIds.Add(row.Id);
             var enabledBefore = _installManager.GetInstalled().Count(m => m.Enabled);
             _installManager.SetEnabled(row.Id, turningOn, _game);
             var enabledAfter = _installManager.GetInstalled().Count(m => m.Enabled);

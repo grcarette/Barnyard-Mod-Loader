@@ -47,6 +47,18 @@ public interface IInstallManager
     /// </summary>
     InstallPlan PlanInstall(string modId, ModIndex index, int? targetRevision = null);
     Task ExecuteAsync(InstallPlan plan, IModRepository repository, GameInstall game, CancellationToken ct = default);
+    /// <summary>
+    /// Installs a mod directly from a local .dll or .zip, bypassing the server.
+    /// The mod is tracked like any other install but marked IsLocal.
+    /// </summary>
+    Task<InstalledMod> InstallLocalAsync(string sourcePath, string displayName, string description, GameInstall game);
+    /// <summary>
+    /// Adopts untracked mods found in BepInEx/plugins: matches dlls to the
+    /// index by GUID, renames folders to Barnyard's scheme, and registers
+    /// them as installed; mods unknown to the server become local mods.
+    /// Returns the number adopted.
+    /// </summary>
+    int AdoptExistingMods(ModIndex index, GameInstall game);
     Task UninstallAsync(string modId, GameInstall game);
     void SetEnabled(string modId, bool enabled, GameInstall game);
 }

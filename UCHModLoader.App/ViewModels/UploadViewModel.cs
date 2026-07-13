@@ -25,6 +25,7 @@ public partial class MyModInfo : ObservableObject
     public bool IsPrivate { get; set; }
     public int PendingCount { get; set; }
     public bool HasPending => PendingCount > 0;
+    public double CardNameFontSize => UiText.FitFontSize(Name, 13, 18, 9.5);
 
     [ObservableProperty] private Bitmap? _icon;
     [ObservableProperty] private bool _isSelected;
@@ -80,6 +81,11 @@ public partial class UploadViewModel : ObservableObject
     [ObservableProperty] private bool _isUploading;
     [ObservableProperty] private string _dependencyConstraint = ">=1.0.0";
     [ObservableProperty] private ModEntry? _selectedDependency;
+    [ObservableProperty] private ModEntry? _selectedConflict;
+    [ObservableProperty] private bool _isLocalMod;
+    [ObservableProperty] private string _detailsDependencyConstraint = ">=1.0.0";
+    [ObservableProperty] private ModEntry? _detailsSelectedDependency;
+    [ObservableProperty] private ModEntry? _detailsSelectedConflict;
 
     [ObservableProperty] private MyModInfo? _selectedMyMod;
     [ObservableProperty] private string _detailsName = "";
@@ -103,6 +109,15 @@ public partial class UploadViewModel : ObservableObject
 
     public ObservableCollection<ModEntry> IndexMods { get; } = new();
     public ObservableCollection<string> Dependencies { get; } = new();
+    public ObservableCollection<string> Conflicts { get; } = new();
+    public ObservableCollection<string> DetailsDependencies { get; } = new();
+    public ObservableCollection<string> DetailsConflicts { get; } = new();
+
+    /// <summary>
+    /// Installs a local mod file straight into the game, bypassing the server.
+    /// Set by the main view model; returns an error message or null on success.
+    /// </summary>
+    public Func<string, string, string, Task<string?>>? LocalInstallHandler { get; set; }
     public ObservableCollection<MyModInfo> MyMods { get; } = new();
     public ObservableCollection<TagOptionViewModel> UploadTags { get; } =
         new(ModTags.All.Select(t => new TagOptionViewModel(t)));
@@ -125,6 +140,12 @@ public partial class UploadViewModel : ObservableObject
     }
 
     public bool IsLoggedIn => !string.IsNullOrWhiteSpace(ApiToken);
+
+    /// <summary>Header username matches the avatar height; long names shrink to fit.</summary>
+    public double UsernameFontSize => UiText.FitFontSize(CurrentUsername, 20, 10, 11);
+
+    partial void OnCurrentUsernameChanged(string value) =>
+        OnPropertyChanged(nameof(UsernameFontSize));
     public bool HasMyMods => MyMods.Count > 0;
     public bool SelectedMyModIsPrivate => SelectedMyMod?.IsPrivate ?? false;
 
@@ -322,6 +343,19 @@ public partial class UploadViewModel : ObservableObject
         DetailsDescription = value?.Description ?? "";
         foreach (var tag in DetailsTags)
             tag.IsSelected = value?.Tags.Contains(tag.Name, StringComparer.OrdinalIgnoreCase) ?? false;
+
+        DetailsDependencies.Clear();
+        DetailsConflicts.Clear();
+        var entry = value is null ? null : IndexMods.FirstOrDefault(e =>
+            string.Equals(e.Id, value.Id, StringComparison.OrdinalIgnoreCase));
+        if (entry is not null)
+        {
+            foreach (var (depId, constraint) in entry.Latest()?.Dependencies
+                                                ?? new Dictionary<string, string>())
+                DetailsDependencies.Add($"{depId}|{constraint}");
+            foreach (var conflictId in entry.Conflicts)
+                DetailsConflicts.Add(conflictId);
+        }
         UpdateUpdatePreview();
     }
 
@@ -497,8 +531,21 @@ public partial class UploadViewModel : ObservableObject
         }
     }
 
+    [ObservableProperty] private bool _isModManagerOpen;
+
     [RelayCommand]
-    private void SelectMyMod(MyModInfo mod) => SelectedMyMod = mod;
+    private void SelectMyMod(MyModInfo mod)
+    {
+        SelectedMyMod = mod;
+        IsModManagerOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseModManager()
+    {
+        IsModManagerOpen = false;
+        SelectedMyMod = null;
+    }
 
     [RelayCommand]
     private async Task LoginWithDiscordAsync()
@@ -581,10 +628,80 @@ public partial class UploadViewModel : ObservableObject
     private void RemoveDependency(string entry) => Dependencies.Remove(entry);
 
     [RelayCommand]
+    private void AddConflict()
+    {
+        if (SelectedConflict is null) return;
+        if (!Conflicts.Contains(SelectedConflict.Id)) Conflicts.Add(SelectedConflict.Id);
+    }
+
+    [RelayCommand]
+    private void RemoveConflict(string entry) => Conflicts.Remove(entry);
+
+    [RelayCommand]
+    private void AddDetailsDependency()
+    {
+        if (DetailsSelectedDependency is null) return;
+        if (SelectedMyMod is not null &&
+            string.Equals(DetailsSelectedDependency.Id, SelectedMyMod.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            Status = "A mod cannot depend on itself.";
+            return;
+        }
+        var entry = $"{DetailsSelectedDependency.Id}|{DetailsDependencyConstraint.Trim()}";
+        if (DetailsDependencies.All(d => !d.StartsWith($"{DetailsSelectedDependency.Id}|",
+                StringComparison.OrdinalIgnoreCase)))
+            DetailsDependencies.Add(entry);
+    }
+
+    [RelayCommand]
+    private void RemoveDetailsDependency(string entry) => DetailsDependencies.Remove(entry);
+
+    [RelayCommand]
+    private void AddDetailsConflict()
+    {
+        if (DetailsSelectedConflict is null) return;
+        if (SelectedMyMod is not null &&
+            string.Equals(DetailsSelectedConflict.Id, SelectedMyMod.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            Status = "A mod cannot conflict with itself.";
+            return;
+        }
+        if (!DetailsConflicts.Contains(DetailsSelectedConflict.Id))
+            DetailsConflicts.Add(DetailsSelectedConflict.Id);
+    }
+
+    [RelayCommand]
+    private void RemoveDetailsConflict(string entry) => DetailsConflicts.Remove(entry);
+
+    [RelayCommand]
     private async Task UploadAsync()
     {
-        if (string.IsNullOrWhiteSpace(ApiToken)) { Status = "Login with Discord first."; return; }
         if (!File.Exists(ModFilePath)) { Status = "Choose a .dll or .zip mod file."; return; }
+
+        // Local mods never touch the server: install straight into the game.
+        if (IsLocalMod)
+        {
+            if (LocalInstallHandler is null) { Status = "Local install is not available."; return; }
+            try
+            {
+                IsUploading = true;
+                Status = "Installing local mod…";
+                var error = await LocalInstallHandler(ModFilePath, ModName.Trim(), Description);
+                if (error is not null) { Status = error; return; }
+
+                Status = "Local mod installed — find it in the Installed tab.";
+                ModName = "";
+                ModFilePath = "";
+                Description = "";
+            }
+            finally
+            {
+                IsUploading = false;
+            }
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ApiToken)) { Status = "Login with Discord first."; return; }
 
         var nameError = ModNaming.Validate(ModName);
         if (nameError is not null) { Status = nameError; return; }
@@ -620,6 +737,7 @@ public partial class UploadViewModel : ObservableObject
             form.Add(new StringContent(ModName.Trim()), "name");
             form.Add(new StringContent(Description), "description");
             form.Add(new StringContent(JsonSerializer.Serialize(deps)), "dependencies");
+            form.Add(new StringContent(JsonSerializer.Serialize(Conflicts.ToList())), "conflicts");
             form.Add(new StringContent(JsonSerializer.Serialize(selectedTags)), "tags");
             form.Add(new StringContent(IsPrivateMod ? "true" : "false"), "isPrivate");
             form.Add(new StringContent(Changelog), "changelog");
@@ -641,6 +759,7 @@ public partial class UploadViewModel : ObservableObject
                 IconFilePath = "";
                 Description = "";
                 Dependencies.Clear();
+                Conflicts.Clear();
                 foreach (var tag in UploadTags) tag.IsSelected = false;
                 IsPrivateMod = false;
                 Changelog = "";
@@ -727,16 +846,21 @@ public partial class UploadViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task GenerateKeyAsync()
+    private async Task GenerateKeyAsync(string keyType)
     {
         if (string.IsNullOrWhiteSpace(ApiToken)) { Status = "Login with Discord first."; return; }
         if (SelectedMyMod is null) { Status = "Select one of your mods first."; return; }
 
+        var multiUse = keyType == "multi";
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post,
                 $"{BaseUrl}/api/mods/{Uri.EscapeDataString(SelectedMyMod.Id)}/generatekey");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiToken);
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["multiUse"] = multiUse ? "true" : "false",
+            });
             var response = await Http.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -748,7 +872,9 @@ public partial class UploadViewModel : ObservableObject
 
             using var json = JsonDocument.Parse(body);
             GeneratedKey = json.RootElement.GetProperty("key").GetString() ?? "";
-            Status = "Key generated — share it with one person. It can be used once.";
+            Status = multiUse
+                ? "Key generated — anyone with it can redeem it for the next 48 hours."
+                : "Key generated — share it with one person. It can be used once.";
         }
         catch (Exception ex)
         {
@@ -843,10 +969,16 @@ public partial class UploadViewModel : ObservableObject
                 return;
             }
 
+            var detailDeps = DetailsDependencies
+                .Select(d => d.Split('|', 2))
+                .ToDictionary(parts => parts[0], parts => parts.Length > 1 ? parts[1] : "*");
+
             using var form = new MultipartFormDataContent();
             form.Add(new StringContent(DetailsName.Trim()), "name");
             form.Add(new StringContent(DetailsDescription), "description");
             form.Add(new StringContent(JsonSerializer.Serialize(selectedTags)), "tags");
+            form.Add(new StringContent(JsonSerializer.Serialize(detailDeps)), "dependencies");
+            form.Add(new StringContent(JsonSerializer.Serialize(DetailsConflicts.ToList())), "conflicts");
 
             if (File.Exists(DetailsIconPath))
             {

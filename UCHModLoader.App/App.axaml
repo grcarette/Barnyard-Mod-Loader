@@ -2,7 +2,137 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="UCHModLoader.App.App"
              RequestedThemeVariant="Default">
+  <Application.Resources>
+    <ResourceDictionary>
+      <!-- Global font: overrides the Fluent theme's default font resource. -->
+      <FontFamily x:Key="ContentControlThemeFontFamily">avares://Barnyard/Assets/Fonts/KGBlankSpaceSolid.ttf#KG Blank Space Solid</FontFamily>
+      <FontFamily x:Key="AppFont">avares://Barnyard/Assets/Fonts/KGBlankSpaceSolid.ttf#KG Blank Space Solid</FontFamily>
+      <ResourceDictionary.ThemeDictionaries>
+        <!-- Softer window background: the Fluent defaults sit too far from the
+             button greys, making every control look like it floats. -->
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="AppBackgroundBrush">#202024</SolidColorBrush>
+          <SolidColorBrush x:Key="ButtonBackground">#34343A</SolidColorBrush>
+          <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#3E3E45</SolidColorBrush>
+          <SolidColorBrush x:Key="ButtonBackgroundPressed">#2C2C31</SolidColorBrush>
+          <SolidColorBrush x:Key="TabSelectedBrush">#17171A</SolidColorBrush>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="AppBackgroundBrush">#ECECEA</SolidColorBrush>
+          <SolidColorBrush x:Key="TabSelectedBrush">#D2D2CE</SolidColorBrush>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
+
+    <!-- Everything inherits the app font, including popups and flyouts. -->
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="{DynamicResource AppFont}"/>
+      <Setter Property="Background" Value="{DynamicResource AppBackgroundBrush}"/>
+    </Style>
+    <Style Selector="TextBlock">
+      <Setter Property="FontFamily" Value="{DynamicResource AppFont}"/>
+    </Style>
+
+    <!-- Text inputs: text sits vertically centered instead of hugging the top. -->
+    <Style Selector="TextBox">
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBox[AcceptsReturn=True]">
+      <Setter Property="VerticalContentAlignment" Value="Top"/>
+    </Style>
+
+    <!-- Flyouts that should hug their target with no inner padding
+         (e.g. the profile menu, so Log out lines up with the button edge). -->
+    <Style Selector="FlyoutPresenter.slim">
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- Small inline text links (e.g. License in the status bar). -->
+    <Style Selector="Button.link">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Padding" Value="4,2"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Opacity" Value="0.55"/>
+    </Style>
+    <Style Selector="Button.link:pointerover">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <!-- Setup choice cards: grow slightly and glow gold on hover. -->
+    <Style Selector="Button.setupCard">
+      <Setter Property="Opacity" Value="0.92"/>
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.setupCard:pointerover">
+      <Setter Property="RenderTransform" Value="scale(1.04)"/>
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="Button.setupCard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="#E0A526"/>
+      <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+
+    <!-- Sidebar tab buttons: the active tab reads darker. -->
+    <Style Selector="Button.selected">
+      <Setter Property="Background" Value="{DynamicResource TabSelectedBrush}"/>
+    </Style>
+    <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabSelectedBrush}"/>
+    </Style>
+
+    <!-- All buttons run ~25% larger than the Fluent defaults (32px min height,
+         11,5 padding) to keep click targets comfortable; text is sized and
+         centered to sit right in the taller buttons. -->
+    <Style Selector="Button">
+      <Setter Property="MinHeight" Value="40"/>
+      <Setter Property="Padding" Value="14,7"/>
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Red destructive-action buttons (Uninstall) -->
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#C42B1C"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#D74436"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#A4231A"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <!-- Gold call-to-action buttons (Install / Install pack) -->
+    <Style Selector="Button.gold">
+      <Setter Property="Background" Value="#E0A526"/>
+      <Setter Property="Foreground" Value="#1B1400"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.gold:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#EFBA45"/>
+      <Setter Property="Foreground" Value="#1B1400"/>
+    </Style>
+    <Style Selector="Button.gold:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#C6911D"/>
+      <Setter Property="Foreground" Value="#1B1400"/>
+    </Style>
   </Application.Styles>
 </Application>

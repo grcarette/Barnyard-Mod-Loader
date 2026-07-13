@@ -4,8 +4,8 @@
         x:Class="UCHModLoader.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Barnyard"
-        Width="860" Height="560"
-        MinWidth="720" MinHeight="420">
+        Width="940" Height="620"
+        MinWidth="800" MinHeight="480">
 
 	<Panel>
 
@@ -17,22 +17,34 @@
 					BorderThickness="0,0,0,1" Padding="8,8,12,8">
 				<DockPanel>
 					<Button DockPanel.Dock="Right" Content="Launch game" Classes="accent"
+							Height="60" Padding="24,0" FontSize="20"
 							VerticalAlignment="Center"
 							Command="{Binding LaunchGameCommand}"/>
-					<Button DockPanel.Dock="Left" Width="164" Height="48" Margin="0,0,16,0"
+					<Button DockPanel.Dock="Left" Width="205" Height="60" Margin="0,0,16,0"
 							VerticalAlignment="Center" HorizontalContentAlignment="Center"
-							Content="Log in with Discord" FontSize="12"
+							FontSize="13"
 							IsVisible="{Binding Upload.IsLoggedIn, Converter={x:Static BoolConverters.Not}}"
-							Command="{Binding Upload.LoginWithDiscordCommand}"/>
-					<Button DockPanel.Dock="Left" Width="164" Height="48" Margin="0,0,16,0"
-							VerticalAlignment="Center" Padding="10,4"
+							Command="{Binding Upload.LoginWithDiscordCommand}">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<Image Width="20" Height="20" VerticalAlignment="Center"
+								   Source="avares://Barnyard/Assets/discord_icon_darkmode.png"
+								   IsVisible="{Binding IsDarkMode}"/>
+							<Image Width="20" Height="20" VerticalAlignment="Center"
+								   Source="avares://Barnyard/Assets/discord_icon_lightmode.png"
+								   IsVisible="{Binding IsDarkMode, Converter={x:Static BoolConverters.Not}}"/>
+							<TextBlock Text="Log in with Discord" FontSize="13" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
+					<Button DockPanel.Dock="Left" Width="205" Height="60" Margin="0,0,16,0"
+							VerticalAlignment="Center" Padding="12,5"
 							HorizontalContentAlignment="Left"
 							IsVisible="{Binding Upload.IsLoggedIn}">
 						<Button.Flyout>
-							<MenuFlyout Placement="BottomEdgeAlignedLeft">
-								<MenuItem Header="Log out" Foreground="Red"
-										  Command="{Binding Upload.LogOutCommand}"/>
-							</MenuFlyout>
+							<Flyout Placement="BottomEdgeAlignedLeft" FlyoutPresenterClasses="slim">
+								<Button Content="Log out" Foreground="Red" Width="205"
+										HorizontalContentAlignment="Left" Padding="12,5"
+										Command="{Binding Upload.LogOutCommand}"/>
+							</Flyout>
 						</Button.Flyout>
 						<StackPanel Orientation="Horizontal" Spacing="8">
 							<Border Width="28" Height="28" CornerRadius="14" ClipToBounds="True"
@@ -40,12 +52,13 @@
 									Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
 								<Image Source="{Binding Upload.Avatar}" Stretch="UniformToFill"/>
 							</Border>
-							<TextBlock Text="{Binding Upload.CurrentUsername}" FontSize="13"
-									   VerticalAlignment="Center" MaxWidth="110"
+							<TextBlock Text="{Binding Upload.CurrentUsername}"
+									   FontSize="{Binding Upload.UsernameFontSize}"
+									   VerticalAlignment="Center" MaxWidth="140"
 									   TextTrimming="CharacterEllipsis"/>
 						</StackPanel>
 					</Button>
-					<Button HorizontalAlignment="Left" Padding="10,4" Height="48"
+					<Button HorizontalAlignment="Left" Padding="12,5" Height="60"
 							Command="{Binding SelectTabCommand}" CommandParameter="Profiles">
 						<StackPanel Orientation="Horizontal" Spacing="8">
 							<StackPanel Spacing="1">
@@ -75,12 +88,16 @@
 
 					<StackPanel Spacing="4">
 						<Button Content="Installed" HorizontalAlignment="Stretch"
+								Classes.selected="{Binding IsInstalledTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Installed"/>
 						<Button Content="Browse mods" HorizontalAlignment="Stretch"
+								Classes.selected="{Binding IsBrowseTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Browse"/>
 						<Button Content="Upload mod" HorizontalAlignment="Stretch"
+								Classes.selected="{Binding IsUploadTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Upload"/>
 						<Button Content="Settings" HorizontalAlignment="Stretch"
+								Classes.selected="{Binding IsSettingsTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Settings"/>
 					</StackPanel>
 				</DockPanel>
@@ -91,8 +108,12 @@
 					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
 					BorderThickness="0,1,0,0" Padding="12,6">
 				<DockPanel>
-					<TextBlock DockPanel.Dock="Right" Text="{Binding GamePath}" FontSize="11" Opacity="0.5"/>
-					<TextBlock Text="{Binding StatusMessage}" FontSize="12"/>
+					<Button DockPanel.Dock="Right" Content="License" Classes="link"
+							Margin="10,0,0,0" VerticalAlignment="Center"
+							Command="{Binding ShowLicenseCommand}"/>
+					<TextBlock DockPanel.Dock="Right" Text="{Binding GamePath}" FontSize="11" Opacity="0.5"
+							   VerticalAlignment="Center"/>
+					<TextBlock Text="{Binding StatusMessage}" FontSize="12" VerticalAlignment="Center"/>
 				</DockPanel>
 			</Border>
 
@@ -109,7 +130,7 @@
 						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
 							<Button Content="Check updates" Command="{Binding CheckUpdatesCommand}"/>
 							<Button Content="Update all" Command="{Binding UpdateAllCommand}"/>
-							<Button Content="{Binding InstalledViewButtonText}" Width="150"
+							<Button Content="{Binding InstalledViewButtonText}" Width="188"
 									HorizontalContentAlignment="Center"
 									Command="{Binding ToggleInstalledViewCommand}"/>
 						</StackPanel>
@@ -156,6 +177,10 @@
 														<StackPanel VerticalAlignment="Center" Spacing="2">
 															<StackPanel Orientation="Horizontal" Spacing="6">
 																<TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+																<Ellipse Width="10" Height="10" Fill="#E53935"
+																		 VerticalAlignment="Center"
+																		 IsVisible="{Binding HasConflict}"
+																		 ToolTip.Tip="{Binding ConflictTooltip}"/>
 																<TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="12"
 																		   VerticalAlignment="Center"/>
 															</StackPanel>
@@ -181,10 +206,12 @@
 					<DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
 						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
 							<ComboBox ItemsSource="{Binding TagFilterOptions}"
-									  SelectedItem="{Binding SelectedTagFilter}" MinWidth="104"/>
+									  SelectedItem="{Binding SelectedTagFilter}" MinWidth="130"
+									  Height="40" VerticalContentAlignment="Center"/>
 							<ComboBox ItemsSource="{Binding SortOptions}"
-									  SelectedItem="{Binding SelectedSortOption}" MinWidth="124"/>
-							<Button Content="Download Private Mod" FontSize="12" Height="32" Width="170"
+									  SelectedItem="{Binding SelectedSortOption}" MinWidth="155"
+									  Height="40" VerticalContentAlignment="Center"/>
+							<Button Content="Download Private Mod" FontSize="12" Height="40" Width="212"
 									VerticalAlignment="Center" VerticalContentAlignment="Center"
 									HorizontalContentAlignment="Center">
 								<Button.Flyout>
@@ -193,9 +220,16 @@
 											<TextBlock Text="Enter your access key" FontSize="12"/>
 											<TextBox Watermark="XXXX-XXXX-XXXX-XXXX"
 													 Text="{Binding PrivateKeyInput}"/>
-											<Button Content="Redeem" HorizontalAlignment="Right" FontSize="12"
-													Command="{Binding RedeemKeyCommand}"/>
-											<TextBlock Text="Keys are one-time use and grant permanent access to your Discord account."
+											<StackPanel Orientation="Horizontal" Spacing="8"
+														HorizontalAlignment="Right">
+												<ProgressBar IsIndeterminate="True" Width="64" Height="4"
+															 VerticalAlignment="Center"
+															 IsVisible="{Binding IsRedeemingKey}"/>
+												<Button Content="Redeem" FontSize="12"
+														IsEnabled="{Binding IsRedeemingKey, Converter={x:Static BoolConverters.Not}}"
+														Command="{Binding RedeemKeyCommand}"/>
+											</StackPanel>
+											<TextBlock Text="A key grants permanent access to the mod on your Discord account."
 													   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
 										</StackPanel>
 									</Flyout>
@@ -240,7 +274,7 @@
 							</StackPanel>
 							<DockPanel Margin="6,0,6,8">
 								<Button DockPanel.Dock="Right" Content="{Binding BrowseViewButtonText}"
-										Width="170" Height="32" HorizontalContentAlignment="Center"
+										Width="212" Height="40" HorizontalContentAlignment="Center"
 										VerticalContentAlignment="Center" FontSize="12"
 										Command="{Binding ToggleBrowseViewCommand}"/>
 								<TextBlock Text="All mods" FontSize="15" FontWeight="Medium"
@@ -266,15 +300,24 @@
 														Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
 													<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
 												</Border>
-												<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+												<TextBlock Text="{Binding Name}" FontSize="{Binding CardNameFontSize}"
+														   FontWeight="Medium"
 														   TextWrapping="Wrap" TextAlignment="Center"
 														   MaxWidth="180" MaxLines="2" TextTrimming="CharacterEllipsis"/>
 												<StackPanel Orientation="Horizontal" Spacing="10"
 															HorizontalAlignment="Center">
-													<TextBlock FontSize="11" Opacity="0.55">
-														<Run Text="▲"/>
-														<Run Text="{Binding Upvotes}"/>
-													</TextBlock>
+													<StackPanel Orientation="Horizontal" Spacing="4">
+														<Panel Width="11" Height="11" VerticalAlignment="Center">
+															<Path Data="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.72v-2z"
+																  Stretch="Uniform" Opacity="0.55"
+																  Fill="{DynamicResource SystemControlForegroundBaseHighBrush}"
+																  IsVisible="{Binding HasVoted, Converter={x:Static BoolConverters.Not}}"/>
+															<Path Data="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.72v-2z"
+																  Stretch="Uniform" Fill="#4CAF50"
+																  IsVisible="{Binding HasVoted}"/>
+														</Panel>
+														<TextBlock Text="{Binding Upvotes}" FontSize="11" Opacity="0.55"/>
+													</StackPanel>
 													<TextBlock Text="{Binding DownloadsDisplay}" FontSize="11" Opacity="0.55"/>
 												</StackPanel>
 											</StackPanel>
@@ -308,7 +351,7 @@
 								</StackPanel>
 							</StackPanel>
 
-							<Button Content="Install pack" HorizontalAlignment="Left"
+							<Button Content="Install pack" Classes="gold" HorizontalAlignment="Left"
 									IsEnabled="{Binding SelectedPack.IsBusy, Converter={x:Static BoolConverters.Not}}"
 									Command="{Binding InstallPackCommand}"
 									CommandParameter="{Binding SelectedPack}"/>
@@ -326,10 +369,39 @@
 									BorderThickness="0,1,0,0" Padding="0,12,0,0">
 								<StackPanel Spacing="6">
 									<TextBlock Text="Included mods" FontSize="13" FontWeight="Medium"/>
-									<ItemsControl ItemsSource="{Binding SelectedPack.ModNames}">
+									<ItemsControl ItemsSource="{Binding SelectedPack.Mods}">
 										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-												<TextBlock Text="{Binding}" FontSize="13" Opacity="0.85" Margin="0,2"/>
+											<DataTemplate x:DataType="vm:ModRowViewModel">
+												<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+														BorderThickness="0,0,0,1" Padding="2,7">
+													<StackPanel Spacing="5">
+														<Button Background="Transparent" BorderThickness="0" Padding="0"
+																MinHeight="0" HorizontalAlignment="Stretch"
+																HorizontalContentAlignment="Left"
+																Command="{Binding $parent[Window].DataContext.ToggleExpandCommand}"
+																CommandParameter="{Binding}">
+															<StackPanel Orientation="Horizontal" Spacing="10">
+																<Border Width="28" Height="28" CornerRadius="5" ClipToBounds="True"
+																		VerticalAlignment="Center"
+																		Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+																	<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+																</Border>
+																<StackPanel VerticalAlignment="Center" Spacing="1">
+																	<StackPanel Orientation="Horizontal" Spacing="6">
+																		<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"/>
+																		<TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="11"
+																				   VerticalAlignment="Center"/>
+																	</StackPanel>
+																	<TextBlock Text="Click for details" FontSize="10" Opacity="0.4"
+																			   IsVisible="{Binding IsExpanded, Converter={x:Static BoolConverters.Not}}"/>
+																</StackPanel>
+															</StackPanel>
+														</Button>
+														<TextBlock Text="{Binding Description}" FontSize="12" Opacity="0.7"
+																   TextWrapping="Wrap" Margin="38,0,0,0"
+																   IsVisible="{Binding IsExpanded}"/>
+													</StackPanel>
+												</Border>
 											</DataTemplate>
 										</ItemsControl.ItemTemplate>
 									</ItemsControl>
@@ -387,24 +459,38 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Spacing="8">
-								<Button Content="Install"
+								<Button Content="Install" Classes="gold" Width="130"
+										HorizontalContentAlignment="Center"
 										IsEnabled="{Binding SelectedBrowseMod.IsBusy, Converter={x:Static BoolConverters.Not}}"
 										IsVisible="{Binding SelectedBrowseMod.IsInstalled, Converter={x:Static BoolConverters.Not}}"
 										Command="{Binding InstallModCommand}"
+										CommandParameter="{Binding SelectedBrowseMod}"/>
+								<Button Content="Uninstall" Classes="danger" Width="130"
+										HorizontalContentAlignment="Center"
+										IsEnabled="{Binding SelectedBrowseMod.IsBusy, Converter={x:Static BoolConverters.Not}}"
+										IsVisible="{Binding SelectedBrowseMod.IsInstalled}"
+										Command="{Binding UninstallModCommand}"
 										CommandParameter="{Binding SelectedBrowseMod}"/>
 								<Button Content="Update"
 										IsVisible="{Binding SelectedBrowseMod.UpdateAvailable}"
 										Command="{Binding InstallModCommand}"
 										CommandParameter="{Binding SelectedBrowseMod}"/>
 								<Button Command="{Binding ToggleVoteCommand}"
-										CommandParameter="{Binding SelectedBrowseMod}">
+										CommandParameter="{Binding SelectedBrowseMod}"
+										ToolTip.Tip="Like this mod">
 									<StackPanel Orientation="Horizontal" Spacing="6">
-										<TextBlock Text="▲" FontSize="12"/>
+										<Panel Width="13" Height="13" VerticalAlignment="Center">
+											<Path Data="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.72v-2z"
+												  Stretch="Uniform"
+												  Fill="{DynamicResource SystemControlForegroundBaseHighBrush}"
+												  IsVisible="{Binding SelectedBrowseMod.HasVoted, Converter={x:Static BoolConverters.Not}}"/>
+											<Path Data="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.72v-2z"
+												  Stretch="Uniform" Fill="#4CAF50"
+												  IsVisible="{Binding SelectedBrowseMod.HasVoted}"/>
+										</Panel>
 										<TextBlock Text="{Binding SelectedBrowseMod.Upvotes}" FontSize="12"/>
 									</StackPanel>
 								</Button>
-								<TextBlock Text="Voted" FontSize="11" Opacity="0.6" VerticalAlignment="Center"
-										   IsVisible="{Binding SelectedBrowseMod.HasVoted}"/>
 							</StackPanel>
 
 							<TextBlock FontSize="12" Opacity="0.7"
@@ -533,7 +619,8 @@
 				</ScrollViewer>
 
 				<!-- Settings tab -->
-				<StackPanel IsVisible="{Binding IsSettingsTab}" Spacing="12" MaxWidth="480"
+				<ScrollViewer IsVisible="{Binding IsSettingsTab}">
+				<StackPanel Spacing="12" MaxWidth="480"
 							HorizontalAlignment="Left">
 					<TextBlock Text="Settings" FontSize="18"/>
 					<TextBlock Text="Game folder" FontSize="12" Opacity="0.6"/>
@@ -558,6 +645,20 @@
 								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
 					</StackPanel>
 
+					<StackPanel Spacing="4" Margin="0,8,0,0">
+						<ToggleSwitch IsChecked="{Binding AutoUpdateMods}"
+									  OnContent="Auto-update mods on startup"
+									  OffContent="Auto-update mods on startup"/>
+						<TextBlock Text="When on, installed mods with a newer version are updated automatically every time Barnyard opens."
+								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+					</StackPanel>
+
+					<StackPanel Spacing="4" Margin="0,8,0,0">
+						<ToggleSwitch IsChecked="{Binding IsDarkMode}"
+									  OnContent="Dark mode"
+									  OffContent="Light mode"/>
+					</StackPanel>
+
 					<StackPanel Spacing="4" Margin="0,8,0,0" IsVisible="{Binding HasLaunchOptions}">
 						<TextBlock Text="Steam launch options (required on this platform)" FontSize="12" Opacity="0.6"/>
 						<TextBox Text="{Binding LaunchOptionsText}" IsReadOnly="True"
@@ -565,10 +666,33 @@
 						<TextBlock Text="Set in Steam: right-click the game → Properties → Launch Options."
 								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
 					</StackPanel>
+
 				</StackPanel>
+				</ScrollViewer>
 
 				<!-- Upload tab -->
-				<DockPanel IsVisible="{Binding IsUploadTab}">
+				<Panel IsVisible="{Binding IsUploadTab}">
+
+				<!-- Logged out: the whole page is one login button -->
+				<StackPanel IsVisible="{Binding Upload.IsLoggedIn, Converter={x:Static BoolConverters.Not}}"
+							HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+					<Button Height="64" Padding="24,0" HorizontalAlignment="Center"
+							Command="{Binding Upload.LoginWithDiscordCommand}">
+						<StackPanel Orientation="Horizontal" Spacing="10">
+							<Image Width="26" Height="26" VerticalAlignment="Center"
+								   Source="avares://Barnyard/Assets/discord_icon_darkmode.png"
+								   IsVisible="{Binding IsDarkMode}"/>
+							<Image Width="26" Height="26" VerticalAlignment="Center"
+								   Source="avares://Barnyard/Assets/discord_icon_lightmode.png"
+								   IsVisible="{Binding IsDarkMode, Converter={x:Static BoolConverters.Not}}"/>
+							<TextBlock Text="Log in with Discord" FontSize="17" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
+					<TextBlock Text="Log in to upload and manage your mods."
+							   FontSize="13" Opacity="0.6" HorizontalAlignment="Center"/>
+				</StackPanel>
+
+				<DockPanel IsVisible="{Binding Upload.IsLoggedIn}">
 					<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="14"
 								Margin="0,0,0,14">
 						<StackPanel Spacing="3">
@@ -606,19 +730,6 @@
 
 							<!-- Section: Upload a mod -->
 							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsUploadSection}">
-								<StackPanel Orientation="Horizontal" Spacing="10">
-									<Button Content="Login with Discord"
-											Command="{Binding Upload.LoginWithDiscordCommand}"
-											IsVisible="{Binding Upload.IsLoggedIn, Converter={x:Static BoolConverters.Not}}"/>
-									<StackPanel Orientation="Horizontal" Spacing="6"
-												IsVisible="{Binding Upload.IsLoggedIn}">
-										<Ellipse Width="8" Height="8" Fill="Green" VerticalAlignment="Center"/>
-										<TextBlock Text="Logged in with Discord" FontSize="12" VerticalAlignment="Center"/>
-										<Button Content="Log out" FontSize="11"
-												Command="{Binding Upload.LogOutCommand}"/>
-									</StackPanel>
-								</StackPanel>
-
 								<TextBlock Text="Mod name" FontSize="12" Opacity="0.6"/>
 								<TextBox Text="{Binding Upload.ModName}" Watermark="Shown in Browse; also the install folder name"
 										 MaxLength="60"/>
@@ -632,68 +743,113 @@
 								<TextBlock Text="{Binding Upload.UploadPreview}" FontSize="12" Opacity="0.8"
 										   TextWrapping="Wrap"/>
 
-								<TextBlock Text="Icon (.png, optional, max 1 MB)" FontSize="12" Opacity="0.6"/>
-								<DockPanel>
-									<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
-											Click="OnChooseIconFile"/>
-									<TextBox Text="{Binding Upload.IconFilePath}" IsReadOnly="True"/>
-								</DockPanel>
+								<CheckBox Content="Local mod" IsChecked="{Binding Upload.IsLocalMod}" FontSize="12"/>
+								<TextBlock Text="Local mods install straight into your game from this file. Nothing is sent to the server — the mod appears in your Installed tab like any other, but only you have it."
+										   FontSize="11" Opacity="0.5" TextWrapping="Wrap"
+										   IsVisible="{Binding Upload.IsLocalMod}"/>
+
+								<StackPanel Spacing="10"
+											IsVisible="{Binding Upload.IsLocalMod, Converter={x:Static BoolConverters.Not}}">
+									<TextBlock Text="Icon (.png, optional, max 1 MB)" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
+												Click="OnChooseIconFile"/>
+										<TextBox Text="{Binding Upload.IconFilePath}" IsReadOnly="True"/>
+									</DockPanel>
+								</StackPanel>
 
 								<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
 								<TextBox Text="{Binding Upload.Description}" AcceptsReturn="True" Height="70"/>
 
-								<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
-								<ItemsControl ItemsSource="{Binding Upload.UploadTags}">
-									<ItemsControl.ItemsPanel>
-										<ItemsPanelTemplate>
-											<StackPanel Orientation="Horizontal" Spacing="14"/>
-										</ItemsPanelTemplate>
-									</ItemsControl.ItemsPanel>
-									<ItemsControl.ItemTemplate>
-										<DataTemplate>
-											<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
-										</DataTemplate>
-									</ItemsControl.ItemTemplate>
-								</ItemsControl>
-
-								<TextBlock Text="Changelog (optional — shown as 'What's new')" FontSize="12" Opacity="0.6"/>
-								<TextBox Text="{Binding Upload.Changelog}" AcceptsReturn="True" Height="50"/>
-
-								<CheckBox Content="Private mod" IsChecked="{Binding Upload.IsPrivateMod}" FontSize="12"/>
-								<TextBlock Text="Private mods are hidden from Browse. Share access by generating one-time keys after upload."
-										   FontSize="11" Opacity="0.5" TextWrapping="Wrap"
-										   IsVisible="{Binding Upload.IsPrivateMod}"/>
-
-								<TextBlock Text="Dependencies" FontSize="12" Opacity="0.6"/>
-								<DockPanel>
-									<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
-											Command="{Binding Upload.AddDependencyCommand}"/>
-									<TextBox DockPanel.Dock="Right" Width="110" Margin="8,0,0,0"
-											 Text="{Binding Upload.DependencyConstraint}"/>
-									<ComboBox ItemsSource="{Binding Upload.IndexMods}"
-											  SelectedItem="{Binding Upload.SelectedDependency}"
-											  HorizontalAlignment="Stretch">
-										<ComboBox.ItemTemplate>
+								<StackPanel Spacing="10"
+											IsVisible="{Binding Upload.IsLocalMod, Converter={x:Static BoolConverters.Not}}">
+									<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
+									<ItemsControl ItemsSource="{Binding Upload.UploadTags}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="14"/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
 											<DataTemplate>
-												<TextBlock Text="{Binding Name}"/>
+												<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
 											</DataTemplate>
-										</ComboBox.ItemTemplate>
-									</ComboBox>
-								</DockPanel>
-								<ItemsControl ItemsSource="{Binding Upload.Dependencies}">
-									<ItemsControl.ItemTemplate>
-										<DataTemplate>
-											<StackPanel Orientation="Horizontal" Spacing="8">
-												<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
-												<Button Content="Remove" FontSize="11"
-														Command="{Binding $parent[Window].DataContext.Upload.RemoveDependencyCommand}"
-														CommandParameter="{Binding}"/>
-											</StackPanel>
-										</DataTemplate>
-									</ItemsControl.ItemTemplate>
-								</ItemsControl>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+									<TextBlock Text="Changelog (optional — shown as 'What's new')" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.Changelog}" AcceptsReturn="True" Height="50"/>
+
+									<CheckBox Content="Private mod" IsChecked="{Binding Upload.IsPrivateMod}" FontSize="12"/>
+									<TextBlock Text="Private mods are hidden from Browse. Share access by generating keys after upload."
+											   FontSize="11" Opacity="0.5" TextWrapping="Wrap"
+											   IsVisible="{Binding Upload.IsPrivateMod}"/>
+
+									<TextBlock Text="Dependencies" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
+												Command="{Binding Upload.AddDependencyCommand}"/>
+										<TextBox DockPanel.Dock="Right" Width="110" Margin="8,0,0,0"
+												 Text="{Binding Upload.DependencyConstraint}"/>
+										<ComboBox ItemsSource="{Binding Upload.IndexMods}"
+												  SelectedItem="{Binding Upload.SelectedDependency}"
+												  HorizontalAlignment="Stretch">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"/>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+									</DockPanel>
+									<ItemsControl ItemsSource="{Binding Upload.Dependencies}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="8">
+													<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+													<Button Content="Remove" FontSize="11"
+															Command="{Binding $parent[Window].DataContext.Upload.RemoveDependencyCommand}"
+															CommandParameter="{Binding}"/>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+									<TextBlock Text="Conflicts" FontSize="12" Opacity="0.6"/>
+									<TextBlock Text="Mods that are known to clash with this one. Players see a warning when both are enabled."
+											   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
+												Command="{Binding Upload.AddConflictCommand}"/>
+										<ComboBox ItemsSource="{Binding Upload.IndexMods}"
+												  SelectedItem="{Binding Upload.SelectedConflict}"
+												  HorizontalAlignment="Stretch">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"/>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+									</DockPanel>
+									<ItemsControl ItemsSource="{Binding Upload.Conflicts}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="8">
+													<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+													<Button Content="Remove" FontSize="11"
+															Command="{Binding $parent[Window].DataContext.Upload.RemoveConflictCommand}"
+															CommandParameter="{Binding}"/>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
 
 								<Button Content="Upload mod" Command="{Binding Upload.UploadCommand}"
+										IsVisible="{Binding Upload.IsLocalMod, Converter={x:Static BoolConverters.Not}}"
+										IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+								<Button Content="Install local mod" Classes="gold"
+										Command="{Binding Upload.UploadCommand}"
+										IsVisible="{Binding Upload.IsLocalMod}"
 										IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
 							</StackPanel>
 
@@ -726,7 +882,8 @@
 														</Border>
 														<StackPanel Orientation="Horizontal" Spacing="6"
 																	HorizontalAlignment="Center">
-															<TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+															<TextBlock Text="{Binding Name}" FontSize="{Binding CardNameFontSize}"
+																	   FontWeight="Medium"
 																	   TextWrapping="Wrap" TextAlignment="Center"
 																	   MaxWidth="140" MaxLines="2" TextTrimming="CharacterEllipsis"/>
 															<Border IsVisible="{Binding IsSelected}" CornerRadius="8"
@@ -746,77 +903,12 @@
 										</ItemsControl.ItemTemplate>
 									</ItemsControl>
 
-									<StackPanel Spacing="8" IsVisible="{Binding Upload.SelectedMyModIsPrivate}">
-										<Border Height="1" Opacity="0.5"
-												Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-												Margin="0,8,0,4"/>
-										<TextBlock Text="Access keys" FontSize="14" FontWeight="Medium"/>
-										<TextBlock Text="Generate a one-time key to give one person access to this private mod."
-												   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
-										<StackPanel Orientation="Horizontal" Spacing="8">
-											<Button Content="Generate key" FontSize="12"
-													Command="{Binding Upload.GenerateKeyCommand}"/>
-											<TextBox Text="{Binding Upload.GeneratedKey}" IsReadOnly="True" MinWidth="220"
-													 FontFamily="Consolas,Menlo,monospace"
-													 IsVisible="{Binding Upload.GeneratedKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-										</StackPanel>
-									</StackPanel>
-
-									<Border Height="1" Opacity="0.5"
-											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-											Margin="0,8,0,4"/>
-									<TextBlock Text="Update mod" FontSize="14" FontWeight="Medium"/>
-									<TextBlock Text="Upload the new .dll for this mod — no version bump required. Icon, description, and dependencies are kept."
-											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
-									<DockPanel>
-										<Button DockPanel.Dock="Right" Content="Choose file" Margin="8,0,0,0"
-												Click="OnChooseUpdateModFile"/>
-										<TextBox Text="{Binding Upload.UpdateModFilePath}" IsReadOnly="True"/>
-									</DockPanel>
-									<TextBlock Text="{Binding Upload.UpdatePreview}" FontSize="12" Opacity="0.8"
-											   TextWrapping="Wrap"/>
-									<TextBlock Text="Changelog (optional)" FontSize="12" Opacity="0.6"/>
-									<TextBox Text="{Binding Upload.UpdateChangelog}" AcceptsReturn="True" Height="50"/>
-									<Button Content="Update mod" Command="{Binding Upload.UpdateModCommand}"
-											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
-
-									<Border Height="1" Opacity="0.5"
-											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-											Margin="0,8,0,4"/>
-									<TextBlock Text="Edit details" FontSize="14" FontWeight="Medium"/>
-									<TextBlock Text="Change the name, icon, or description without uploading a new version."
-											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
-									<TextBlock Text="Name" FontSize="12" Opacity="0.6"/>
-									<TextBox Text="{Binding Upload.DetailsName}" MaxLength="60"/>
-									<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
-									<TextBox Text="{Binding Upload.DetailsDescription}" AcceptsReturn="True" Height="60"/>
-									<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
-									<ItemsControl ItemsSource="{Binding Upload.DetailsTags}">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<StackPanel Orientation="Horizontal" Spacing="14"/>
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-												<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
-									<TextBlock Text="New icon (.png, optional)" FontSize="12" Opacity="0.6"/>
-									<DockPanel>
-										<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
-												Click="OnChooseDetailsIconFile"/>
-										<TextBox Text="{Binding Upload.DetailsIconPath}" IsReadOnly="True"/>
-									</DockPanel>
-									<Button Content="Update details" Command="{Binding Upload.UpdateDetailsCommand}"
-											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
 								</StackPanel>
 							</StackPanel>
 
 							<!-- Section: Packs (admins only) -->
 							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsPacksSection}">
-								<TextBlock Text="Packs appear in Browse for everyone. Installing one creates a matching profile."
+								<TextBlock Text="Packs appear in Browse for everyone. Installing one adds its mods to the player's current profile."
 										   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
 
 								<TextBlock Text="Pack name" FontSize="12" Opacity="0.6"/>
@@ -905,6 +997,7 @@
 						</StackPanel>
 					</ScrollViewer>
 				</DockPanel>
+				</Panel>
 
 			</Panel>
 		</DockPanel>
@@ -976,6 +1069,303 @@
 				</StackPanel>
 			</Border>
 		</Panel>
+
+		<!-- License popup (opened from the status bar link) -->
+		<Panel IsVisible="{Binding IsLicensePopupVisible}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="520" MaxHeight="460" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24" BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<DockPanel>
+					<DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+						<Button DockPanel.Dock="Right" Content="✕" MinHeight="0" Padding="8,4"
+								Background="Transparent" BorderThickness="0"
+								Command="{Binding DismissLicenseCommand}"/>
+						<TextBlock Text="MIT License" FontSize="16" FontWeight="Medium"
+								   VerticalAlignment="Center"/>
+					</DockPanel>
+					<ScrollViewer>
+						<TextBlock FontSize="11" Opacity="0.75" TextWrapping="Wrap" Margin="0,0,12,0"
+								   Text="Copyright (c) 2026 The Barnyard authors&#x0a;&#x0a;Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:&#x0a;&#x0a;The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.&#x0a;&#x0a;THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."/>
+					</ScrollViewer>
+				</DockPanel>
+			</Border>
+		</Panel>
+
+		<!-- Mod manager: pops up centered when a mod is clicked in "Your mods" -->
+		<Panel IsVisible="{Binding Upload.IsModManagerOpen}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="680" MaxHeight="600" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24" BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<DockPanel>
+					<DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+						<Button DockPanel.Dock="Right" Content="&#x2715;" MinHeight="0" Padding="8,4"
+								Background="Transparent" BorderThickness="0"
+								Command="{Binding Upload.CloseModManagerCommand}"/>
+						<TextBlock Text="{Binding Upload.SelectedMyMod.Name}" FontSize="18"
+								   FontWeight="Medium" VerticalAlignment="Center"/>
+					</DockPanel>
+					<ScrollViewer>
+						<StackPanel Spacing="8" Margin="0,0,12,0">
+									<StackPanel Spacing="8" IsVisible="{Binding Upload.SelectedMyModIsPrivate}">
+										<Border Height="1" Opacity="0.5"
+												Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+												Margin="0,8,0,4"/>
+										<TextBlock Text="Access keys" FontSize="14" FontWeight="Medium"/>
+										<TextBlock Text="One-time keys give a single person access. Multi-use keys can be shared with anyone, but expire after 48 hours."
+												   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<Button Content="Generate one-time key" FontSize="12"
+													Command="{Binding Upload.GenerateKeyCommand}"
+													CommandParameter="single"/>
+											<Button Content="Generate 48-hour key" FontSize="12"
+													Command="{Binding Upload.GenerateKeyCommand}"
+													CommandParameter="multi"/>
+											<TextBox Text="{Binding Upload.GeneratedKey}" IsReadOnly="True" MinWidth="220"
+													 FontFamily="Consolas,Menlo,monospace"
+													 IsVisible="{Binding Upload.GeneratedKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+										</StackPanel>
+									</StackPanel>
+
+									<Border Height="1" Opacity="0.5"
+											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											Margin="0,8,0,4"/>
+									<TextBlock Text="Update mod" FontSize="14" FontWeight="Medium"/>
+									<TextBlock Text="Upload the new .dll for this mod — no version bump required. Icon, description, and dependencies are kept."
+											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Choose file" Margin="8,0,0,0"
+												Click="OnChooseUpdateModFile"/>
+										<TextBox Text="{Binding Upload.UpdateModFilePath}" IsReadOnly="True"/>
+									</DockPanel>
+									<TextBlock Text="{Binding Upload.UpdatePreview}" FontSize="12" Opacity="0.8"
+											   TextWrapping="Wrap"/>
+									<TextBlock Text="Changelog (optional)" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.UpdateChangelog}" AcceptsReturn="True" Height="50"/>
+									<Button Content="Update mod" Command="{Binding Upload.UpdateModCommand}"
+											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+
+									<Border Height="1" Opacity="0.5"
+											Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+											Margin="0,8,0,4"/>
+									<TextBlock Text="Edit details" FontSize="14" FontWeight="Medium"/>
+									<TextBlock Text="Change the name, icon, or description without uploading a new version."
+											   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+									<TextBlock Text="Name" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.DetailsName}" MaxLength="60"/>
+									<TextBlock Text="Description" FontSize="12" Opacity="0.6"/>
+									<TextBox Text="{Binding Upload.DetailsDescription}" AcceptsReturn="True" Height="60"/>
+									<TextBlock Text="Tags (up to 3)" FontSize="12" Opacity="0.6"/>
+									<ItemsControl ItemsSource="{Binding Upload.DetailsTags}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="14"/>
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" FontSize="12"/>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+									<TextBlock Text="New icon (.png, optional)" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Choose icon" Margin="8,0,0,0"
+												Click="OnChooseDetailsIconFile"/>
+										<TextBox Text="{Binding Upload.DetailsIconPath}" IsReadOnly="True"/>
+									</DockPanel>
+
+									<TextBlock Text="Dependencies (applies to the latest version)" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
+												Command="{Binding Upload.AddDetailsDependencyCommand}"/>
+										<TextBox DockPanel.Dock="Right" Width="110" Margin="8,0,0,0"
+												 Text="{Binding Upload.DetailsDependencyConstraint}"/>
+										<ComboBox ItemsSource="{Binding Upload.IndexMods}"
+												  SelectedItem="{Binding Upload.DetailsSelectedDependency}"
+												  HorizontalAlignment="Stretch">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"/>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+									</DockPanel>
+									<ItemsControl ItemsSource="{Binding Upload.DetailsDependencies}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="8">
+													<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+													<Button Content="Remove" FontSize="11"
+															Command="{Binding $parent[Window].DataContext.Upload.RemoveDetailsDependencyCommand}"
+															CommandParameter="{Binding}"/>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+									<TextBlock Text="Conflicts" FontSize="12" Opacity="0.6"/>
+									<DockPanel>
+										<Button DockPanel.Dock="Right" Content="Add" Margin="8,0,0,0"
+												Command="{Binding Upload.AddDetailsConflictCommand}"/>
+										<ComboBox ItemsSource="{Binding Upload.IndexMods}"
+												  SelectedItem="{Binding Upload.DetailsSelectedConflict}"
+												  HorizontalAlignment="Stretch">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"/>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+									</DockPanel>
+									<ItemsControl ItemsSource="{Binding Upload.DetailsConflicts}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal" Spacing="8">
+													<TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+													<Button Content="Remove" FontSize="11"
+															Command="{Binding $parent[Window].DataContext.Upload.RemoveDetailsConflictCommand}"
+															CommandParameter="{Binding}"/>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+									<Button Content="Update details" Command="{Binding Upload.UpdateDetailsCommand}"
+											IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+			</Border>
+		</Panel>
+
+		<!-- First-run setup: covers the whole window, fades out when done -->
+		<Panel IsVisible="{Binding IsSetupVisible}" Opacity="{Binding SetupOpacity}"
+			   Background="{DynamicResource AppBackgroundBrush}">
+			<Panel.Transitions>
+				<Transitions>
+					<DoubleTransition Property="Opacity" Duration="0:0:0.45"/>
+				</Transitions>
+			</Panel.Transitions>
+
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="24"
+						MaxWidth="760">
+
+				<!-- Logo with a warm halo (first screen only) -->
+				<Border Width="200" Height="200" CornerRadius="100" HorizontalAlignment="Center"
+						IsVisible="{Binding IsSetupLogoVisible}">
+					<Border.Background>
+						<RadialGradientBrush>
+							<GradientStop Color="#55E0A526" Offset="0"/>
+							<GradientStop Color="#22E0A526" Offset="0.55"/>
+							<GradientStop Color="#00E0A526" Offset="1"/>
+						</RadialGradientBrush>
+					</Border.Background>
+					<Image Source="avares://Barnyard/Assets/barnyard_logo.png"
+						   Width="112" Height="112"/>
+				</Border>
+
+				<TextBlock Text="Welcome to Barnyard" FontSize="44" FontWeight="Medium"
+						   HorizontalAlignment="Center"/>
+
+				<!-- Stage: loading -->
+				<StackPanel IsVisible="{Binding IsSetupLoading}" Spacing="16"
+							HorizontalAlignment="Center" Margin="0,12,0,0">
+					<ProgressBar IsIndeterminate="True" Width="340" Height="8"/>
+					<TextBlock Text="{Binding SetupStatus}" FontSize="19" Opacity="0.7"
+							   HorizontalAlignment="Center"/>
+				</StackPanel>
+
+				<!-- Stage: sync complete -->
+				<StackPanel IsVisible="{Binding IsSetupSynced}" Spacing="18"
+							HorizontalAlignment="Center" Margin="0,12,0,0">
+					<TextBlock Text="{Binding SetupSyncedText}" FontSize="21" Opacity="0.85"
+							   HorizontalAlignment="Center"/>
+					<Button Content="Continue" Classes="gold" Width="220" Height="52" FontSize="19"
+							HorizontalAlignment="Center"
+							Command="{Binding SetupContinueCommand}"/>
+				</StackPanel>
+
+				<!-- Stage: what is Barnyard for? -->
+				<StackPanel IsVisible="{Binding IsSetupChoice}" Spacing="26"
+							HorizontalAlignment="Center" Margin="0,12,0,0">
+					<TextBlock Text="What do you want to use Barnyard for?" FontSize="26"
+							   HorizontalAlignment="Center"/>
+					<StackPanel Orientation="Horizontal" Spacing="34" HorizontalAlignment="Center">
+						<Button Width="280" Height="420" Padding="0" CornerRadius="12"
+								Classes="setupCard"
+								Command="{Binding SetupChooseCompetitiveCommand}">
+							<Panel>
+								<Border CornerRadius="12" ClipToBounds="True">
+									<Image Source="avares://Barnyard/Assets/competitive_play_icon.png"
+										   Stretch="UniformToFill"/>
+								</Border>
+								<Border VerticalAlignment="Bottom" Background="#B8000000"
+										CornerRadius="0,0,12,12" Padding="12,12">
+									<TextBlock Text="For Competitive Play" FontSize="21" Foreground="White"
+											   HorizontalAlignment="Center" TextWrapping="Wrap"
+											   TextAlignment="Center"/>
+								</Border>
+							</Panel>
+						</Button>
+						<Button Width="280" Height="420" Padding="0" CornerRadius="12"
+								Classes="setupCard"
+								Command="{Binding SetupChooseOtherCommand}">
+							<Panel>
+								<Border CornerRadius="12" ClipToBounds="True">
+									<Image Source="avares://Barnyard/Assets/other_icon.png"
+										   Stretch="UniformToFill"/>
+								</Border>
+								<Border VerticalAlignment="Bottom" Background="#B8000000"
+										CornerRadius="0,0,12,12" Padding="12,12">
+									<TextBlock Text="Other" FontSize="21" Foreground="White"
+											   HorizontalAlignment="Center"/>
+								</Border>
+							</Panel>
+						</Button>
+					</StackPanel>
+				</StackPanel>
+
+				<!-- Stage: competitive pack offer -->
+				<StackPanel IsVisible="{Binding IsSetupCompetitive}" Spacing="24"
+							HorizontalAlignment="Center" Margin="0,12,0,0">
+					<TextBlock Text="Install the competitive mod pack?" FontSize="26"
+							   HorizontalAlignment="Center"/>
+					<TextBlock Text="It sets you up with the mods used for competitive play. You can add or remove mods at any time."
+							   FontSize="17" Opacity="0.65" TextWrapping="Wrap" TextAlignment="Center"
+							   MaxWidth="500"/>
+					<StackPanel Orientation="Horizontal" Spacing="18" HorizontalAlignment="Center">
+						<Button Content="Install" Classes="gold" Width="200" Height="56" FontSize="20"
+								Command="{Binding SetupInstallCompetitiveCommand}"/>
+						<Button Content="Skip" Width="200" Height="56" FontSize="20"
+								Command="{Binding SetupSkipCompetitiveCommand}"/>
+					</StackPanel>
+				</StackPanel>
+
+			</StackPanel>
+		</Panel>
+
+		<!-- Toast: every status message surfaces here so feedback is never
+		     buried in the tiny status bar text -->
+		<Border IsVisible="{Binding IsToastVisible}"
+				HorizontalAlignment="Center" VerticalAlignment="Bottom"
+				Margin="24,0,24,52" MaxWidth="760"
+				CornerRadius="10" Padding="24,15"
+				Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+				BorderThickness="1"
+				BorderBrush="{DynamicResource SystemAccentColor}">
+			<DockPanel>
+				<Button DockPanel.Dock="Right" Content="✕" FontSize="15" Padding="8,3"
+						MinHeight="0" Margin="16,0,0,0" VerticalAlignment="Center"
+						Background="Transparent" BorderThickness="0"
+						Command="{Binding DismissToastCommand}"/>
+				<TextBlock Text="{Binding ToastMessage}" FontSize="19" TextWrapping="Wrap"
+						   VerticalAlignment="Center"/>
+			</DockPanel>
+		</Border>
 
 	</Panel>
 </Window>

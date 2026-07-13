@@ -27,10 +27,12 @@ public sealed class ModDoc
     public bool Hidden { get; set; }                 // moderation kill switch
     public bool IsPrivate { get; set; }
     public List<string> PrivateKeys { get; set; } = new();          // unredeemed one-time keys
+    public List<MultiUseKey> MultiUseKeys { get; set; } = new();    // shared keys, valid until expiry
     public List<string> AuthorizedDiscordIds { get; set; } = new(); // users granted access
     public long Downloads { get; set; }
     public List<string> UpvoterDiscordIds { get; set; } = new();
     public List<string> Tags { get; set; } = new();
+    public List<string> Conflicts { get; set; } = new();   // mod ids known to conflict
     public List<ReportEntry> Reports { get; set; } = new();
     public List<ModVersionDoc> Versions { get; set; } = new();
 }
@@ -55,6 +57,12 @@ public sealed class ModVersionDoc
     public string Changelog { get; set; } = "";
     public Dictionary<string, string> Dependencies { get; set; } = new();
     public DateTime UploadedUtc { get; set; }
+}
+
+public sealed class MultiUseKey
+{
+    public string Key { get; set; } = "";
+    public DateTime ExpiresUtc { get; set; }
 }
 
 public sealed class ReportEntry
