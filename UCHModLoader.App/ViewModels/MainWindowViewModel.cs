@@ -17,7 +17,7 @@ namespace UCHModLoader.App.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public const string LoaderVersion = "1.1.1";
+    public const string LoaderVersion = "1.1.2";
 
     private const string AllTagsOption = "All tags";
     public const string SortMostDownloaded = "Most downloaded";
@@ -458,10 +458,12 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     // Mods every Barnyard user must always have: the in-game config manager
-    // (its server-side dependency pulls in UCHSounds). Enforced — installed
-    // and enabled — at startup, after profile switches, and before launching
-    // the game, so the game can never run without it.
-    private static readonly string[] DefaultModIds = { "com.barnyard.manager" };
+    // and UCHSounds, which it depends on. Enforced — installed and enabled —
+    // at startup, after profile switches, and before launching the game, so
+    // the game can never run without them. Their toggle and uninstall are
+    // locked in the UI.
+    private static readonly string[] DefaultModIds =
+        { "com.barnyard.manager", "com.barnyard.uchsounds" };
 
     private async Task EnsureDefaultModsInstalledAsync()
     {
@@ -495,7 +497,52 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
+        changed |= await RepairMissingDependenciesAsync();
+
         if (changed) SyncActiveProfileFromInstalled();
+    }
+
+    /// <summary>
+    /// Hard dependency check: no enabled mod may run without its dependencies.
+    /// Re-enables installed-but-disabled dependencies and reinstalls missing
+    /// ones (state can drift via in-game toggles or hand-deleted files).
+    /// </summary>
+    private async Task<bool> RepairMissingDependenciesAsync()
+    {
+        if (_game is null || _index is null) return false;
+
+        var changed = false;
+        foreach (var mod in _installManager.GetInstalled().Where(m => m.Enabled).ToList())
+        {
+            foreach (var depId in mod.Dependencies.Keys)
+            {
+                try
+                {
+                    var dep = _installManager.GetInstalled().FirstOrDefault(m =>
+                        string.Equals(m.Id, depId, StringComparison.OrdinalIgnoreCase));
+                    if (dep is null)
+                    {
+                        if (_index.Find(depId) is null) continue;   // not on the server
+                        var plan = _installManager.PlanInstall(depId, _index);
+                        await _installManager.ExecuteAsync(plan, _repository, _game);
+                        _installManager.SetEnabled(depId, true, _game);
+                        changed = true;
+                        StatusMessage = $"Reinstalled missing dependency '{depId}' (required by {mod.Name})";
+                    }
+                    else if (!dep.Enabled)
+                    {
+                        _installManager.SetEnabled(depId, true, _game);
+                        changed = true;
+                        StatusMessage = $"Re-enabled '{dep.Name}' (required by {mod.Name})";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"Could not restore dependency '{depId}': {ex.Message}";
+                }
+            }
+        }
+        return changed;
     }
 
     private void LocateGame()
@@ -1736,6 +1783,12 @@ public partial class MainWindowViewModel : ObservableObject
     private void ToggleMod(ModRowViewModel row)
     {
         if (_game is null) return;
+        if (DefaultModIds.Contains(row.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            StatusMessage = $"{row.Name} is required by Barnyard and stays enabled.";
+            RefreshLists();
+            return;
+        }
         try
         {
             var turningOn = !row.Installed!.Enabled;

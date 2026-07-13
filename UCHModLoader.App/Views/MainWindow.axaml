@@ -167,6 +167,8 @@
 														</TextBlock>
 													</Border>
 													<ToggleSwitch IsChecked="{Binding IsEnabled, Mode=OneWay}"
+																  IsEnabled="{Binding IsToggleAllowed}"
+																  ToolTip.Tip="{Binding ToggleTooltip}"
 																  Command="{Binding $parent[Window].DataContext.ToggleModCommand}"
 																  CommandParameter="{Binding}"
 																  OnContent="" OffContent=""/>

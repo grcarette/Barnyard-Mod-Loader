@@ -60,8 +60,12 @@ public partial class ModRowViewModel : ObservableObject
 
     public bool IsLockedDependency { get; init; }
 
-    /// <summary>False for default mods (the in-game manager): always reinstalled, so uninstall is pointless.</summary>
+    /// <summary>False for default mods (the in-game manager and UCHSounds): always reinstalled, so uninstall is pointless.</summary>
     public bool IsUninstallAllowed { get; init; } = true;
+
+    /// <summary>Default mods can't be toggled off either — they'd just be re-enabled.</summary>
+    public bool IsToggleAllowed => IsUninstallAllowed;
+    public string? ToggleTooltip => IsToggleAllowed ? null : "Required by Barnyard";
 
     public bool CanUninstall => IsUninstallAllowed && !IsLockedDependency;
     public bool CanUninstallNow => CanUninstall && !IsBusy;

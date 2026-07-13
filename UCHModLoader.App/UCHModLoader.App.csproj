@@ -13,7 +13,7 @@
     <AssemblyTitle>Barnyard</AssemblyTitle>
     <Product>Barnyard</Product>
     <!-- Local default; release builds override from the git tag via -p:Version. -->
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Barnyard.ico">
