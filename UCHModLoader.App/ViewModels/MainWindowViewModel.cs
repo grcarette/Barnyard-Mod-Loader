@@ -17,7 +17,7 @@ namespace UCHModLoader.App.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public const string LoaderVersion = "1.0.0";
+    public const string LoaderVersion = "1.1.0";
 
     private const string AllTagsOption = "All tags";
     public const string SortMostDownloaded = "Most downloaded";
