@@ -24,6 +24,8 @@ public partial class ModRowViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasConflict;
     [ObservableProperty] private string _conflictTooltip = "";
+    /// <summary>Pack detail rows dim when the mod is already installed.</summary>
+    [ObservableProperty] private double _packRowOpacity = 1.0;
     public IReadOnlyList<string> ConflictIds { get; init; } = Array.Empty<string>();
     [ObservableProperty] private Bitmap? _icon;
     [ObservableProperty] private int _upvotes;
@@ -57,6 +59,14 @@ public partial class ModRowViewModel : ObservableObject
               Version.TryParse(InstalledVersion, out var iv) && lv > iv);
 
     public bool IsLockedDependency { get; init; }
+
+    /// <summary>False for default mods (the in-game manager): always reinstalled, so uninstall is pointless.</summary>
+    public bool IsUninstallAllowed { get; init; } = true;
+
+    public bool CanUninstall => IsUninstallAllowed && !IsLockedDependency;
+    public bool CanUninstallNow => CanUninstall && !IsBusy;
+    partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanUninstallNow));
+
     public string Subtitle => $"{(IsInstalled ? InstalledVersion : LatestVersion)} · by {Author}";
 
     public ModEntry? Entry { get; init; }

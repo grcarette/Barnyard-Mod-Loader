@@ -12,10 +12,19 @@ public static class IconProcessor
 {
     public const int IconSize = 512;
 
+    // A 1 MB file can still decode to gigabytes of pixels; reject absurd
+    // dimensions from the header before allocating anything.
+    private const int MaxDimension = 4096;
+
     public static byte[]? Normalize(byte[] uploadedBytes)
     {
         try
         {
+            var bounds = SKBitmap.DecodeBounds(uploadedBytes);
+            if (bounds.Width <= 0 || bounds.Height <= 0 ||
+                bounds.Width > MaxDimension || bounds.Height > MaxDimension)
+                return null;
+
             using var original = SKBitmap.Decode(uploadedBytes);
             if (original is null) return null;
 

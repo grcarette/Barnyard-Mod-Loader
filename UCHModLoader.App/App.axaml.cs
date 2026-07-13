@@ -19,6 +19,9 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Clean up leftovers from the over-packed v1.0.0 release zip.
+            ReleaseJunkCleanup.Run();
+
             var http = new HttpClient();
             http.DefaultRequestHeaders.UserAgent.ParseAdd("UCHModLoader/0.1");
 
@@ -58,6 +61,8 @@ public partial class App : Application
                 window.WindowState = WindowState.Maximized;
             window.Closing += (_, _) =>
             {
+                // After a full uninstall, saving would recreate the data folder.
+                if (MainWindowViewModel.UninstallCompleted) return;
                 settings.IsMaximized = window.WindowState == WindowState.Maximized;
                 settings.Save();
             };

@@ -1,20 +1,27 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:UCHModLoader.App.ViewModels"
+        xmlns:app="using:UCHModLoader.App"
         x:Class="UCHModLoader.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Barnyard"
         Width="940" Height="620"
         MinWidth="800" MinHeight="480">
 
+	<Window.Resources>
+		<app:RightmostColumnMarginConverter x:Key="RightmostColumnMargin"/>
+	</Window.Resources>
+
 	<Panel>
 
 		<DockPanel>
 
-			<!-- Header: profile (left) and launch (right), visible on every page -->
+			<!-- Header: profile (left) and launch (right), visible on every page.
+			     Right padding matches the 16px content inset so Launch game lines
+			     up with right-aligned controls below. -->
 			<Border DockPanel.Dock="Top"
 					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-					BorderThickness="0,0,0,1" Padding="8,8,12,8">
+					BorderThickness="0,0,0,1" Padding="8,8,16,8">
 				<DockPanel>
 					<Button DockPanel.Dock="Right" Content="Launch game" Classes="accent"
 							Height="60" Padding="24,0" FontSize="20"
@@ -96,6 +103,10 @@
 						<Button Content="Upload mod" HorizontalAlignment="Stretch"
 								Classes.selected="{Binding IsUploadTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Upload"/>
+						<Button Content="Your mods" HorizontalAlignment="Stretch"
+								Classes.selected="{Binding IsMyModsTab}"
+								IsVisible="{Binding Upload.HasMyMods}"
+								Command="{Binding SelectTabCommand}" CommandParameter="MyMods"/>
 						<Button Content="Settings" HorizontalAlignment="Stretch"
 								Classes.selected="{Binding IsSettingsTab}"
 								Command="{Binding SelectTabCommand}" CommandParameter="Settings"/>
@@ -160,11 +171,12 @@
 																  CommandParameter="{Binding}"
 																  OnContent="" OffContent=""/>
 													<Button Content="Uninstall" FontSize="12"
-															IsEnabled="{Binding IsLockedDependency, Converter={x:Static BoolConverters.Not}}"
+															IsEnabled="{Binding CanUninstall}"
 															Command="{Binding $parent[Window].DataContext.UninstallModCommand}"
 															CommandParameter="{Binding}"/>
 												</StackPanel>
 												<Button Background="Transparent" BorderThickness="0" Padding="0"
+														Classes="rowHover"
 														HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
 														Command="{Binding $parent[Window].DataContext.ToggleExpandCommand}"
 														CommandParameter="{Binding}">
@@ -211,7 +223,7 @@
 							<ComboBox ItemsSource="{Binding SortOptions}"
 									  SelectedItem="{Binding SelectedSortOption}" MinWidth="155"
 									  Height="40" VerticalContentAlignment="Center"/>
-							<Button Content="Download Private Mod" FontSize="12" Height="40" Width="212"
+							<Button Content="Download private mod" FontSize="12" Height="40" Width="212"
 									VerticalAlignment="Center" VerticalContentAlignment="Center"
 									HorizontalContentAlignment="Center">
 								<Button.Flyout>
@@ -272,15 +284,17 @@
 									</ItemsControl.ItemTemplate>
 								</ItemsControl>
 							</StackPanel>
-							<DockPanel Margin="6,0,6,8">
-								<Button DockPanel.Dock="Right" Content="{Binding BrowseViewButtonText}"
-										Width="212" Height="40" HorizontalContentAlignment="Center"
-										VerticalContentAlignment="Center" FontSize="12"
-										Command="{Binding ToggleBrowseViewCommand}"/>
+							<Panel Margin="6,0,6,8">
 								<TextBlock Text="All mods" FontSize="15" FontWeight="Medium"
-										   VerticalAlignment="Center"/>
-							</DockPanel>
-							<ItemsControl ItemsSource="{Binding FilteredAvailableMods}">
+										   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+								<Button Content="{Binding BrowseViewButtonText}"
+										Width="196" Height="40" HorizontalContentAlignment="Center"
+										VerticalContentAlignment="Center" FontSize="12"
+										HorizontalAlignment="Left"
+										Margin="{Binding #BrowseModsGrid.Bounds, Converter={StaticResource RightmostColumnMargin}}"
+										Command="{Binding ToggleBrowseViewCommand}"/>
+							</Panel>
+							<ItemsControl x:Name="BrowseModsGrid" ItemsSource="{Binding FilteredAvailableMods}">
 								<ItemsControl.ItemsPanel>
 									<ItemsPanelTemplate>
 										<WrapPanel/>
@@ -373,7 +387,8 @@
 										<ItemsControl.ItemTemplate>
 											<DataTemplate x:DataType="vm:ModRowViewModel">
 												<Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-														BorderThickness="0,0,0,1" Padding="2,7">
+														BorderThickness="0,0,0,1" Padding="2,7"
+														Opacity="{Binding PackRowOpacity}">
 													<StackPanel Spacing="5">
 														<Button Background="Transparent" BorderThickness="0" Padding="0"
 																MinHeight="0" HorizontalAlignment="Stretch"
@@ -467,7 +482,7 @@
 										CommandParameter="{Binding SelectedBrowseMod}"/>
 								<Button Content="Uninstall" Classes="danger" Width="130"
 										HorizontalContentAlignment="Center"
-										IsEnabled="{Binding SelectedBrowseMod.IsBusy, Converter={x:Static BoolConverters.Not}}"
+										IsEnabled="{Binding SelectedBrowseMod.CanUninstallNow}"
 										IsVisible="{Binding SelectedBrowseMod.IsInstalled}"
 										Command="{Binding UninstallModCommand}"
 										CommandParameter="{Binding SelectedBrowseMod}"/>
@@ -667,6 +682,13 @@
 								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
 					</StackPanel>
 
+					<StackPanel Spacing="6" Margin="0,24,0,12">
+						<Button Content="Uninstall Barnyard" Classes="danger" HorizontalAlignment="Left"
+								Command="{Binding ShowUninstallPromptCommand}"/>
+						<TextBlock Text="Removes every mod installed through Barnyard and deletes its profiles, settings, and caches. Your game and BepInEx are left untouched."
+								   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+					</StackPanel>
+
 				</StackPanel>
 				</ScrollViewer>
 
@@ -701,13 +723,6 @@
 									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="Upload"/>
 							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
 									IsVisible="{Binding Upload.IsUploadSection}"/>
-						</StackPanel>
-						<StackPanel Spacing="3">
-							<Button Content="Your mods" FontSize="13" Padding="10,6"
-									Background="Transparent" BorderThickness="0"
-									Command="{Binding Upload.SelectSectionCommand}" CommandParameter="MyMods"/>
-							<Border Height="2" Background="{DynamicResource SystemAccentColor}"
-									IsVisible="{Binding Upload.IsMyModsSection}"/>
 						</StackPanel>
 						<StackPanel Spacing="3" IsVisible="{Binding Upload.IsAdmin}">
 							<Button Content="Packs" FontSize="13" Padding="10,6"
@@ -853,59 +868,6 @@
 										IsEnabled="{Binding Upload.IsUploading, Converter={x:Static BoolConverters.Not}}"/>
 							</StackPanel>
 
-							<!-- Section: Your mods -->
-							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsMyModsSection}">
-								<TextBlock Text="You haven't uploaded any mods yet."
-										   FontSize="12" Opacity="0.6"
-										   IsVisible="{Binding Upload.HasMyMods, Converter={x:Static BoolConverters.Not}}"/>
-								<StackPanel Spacing="10" IsVisible="{Binding Upload.HasMyMods}">
-									<TextBlock Text="Click a mod to manage it." FontSize="12" Opacity="0.6"/>
-									<ItemsControl ItemsSource="{Binding Upload.MyMods}">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<WrapPanel/>
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-										<ItemsControl.ItemTemplate>
-											<DataTemplate x:DataType="vm:MyModInfo">
-												<Button Width="196" Height="240" Margin="6" Padding="0"
-														HorizontalContentAlignment="Stretch"
-														VerticalContentAlignment="Stretch"
-														Command="{Binding $parent[Window].DataContext.Upload.SelectMyModCommand}"
-														CommandParameter="{Binding}">
-													<StackPanel Spacing="8" HorizontalAlignment="Center"
-																VerticalAlignment="Center">
-														<Border Width="172" Height="172" CornerRadius="14" ClipToBounds="True"
-																HorizontalAlignment="Center"
-																Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-															<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
-														</Border>
-														<StackPanel Orientation="Horizontal" Spacing="6"
-																	HorizontalAlignment="Center">
-															<TextBlock Text="{Binding Name}" FontSize="{Binding CardNameFontSize}"
-																	   FontWeight="Medium"
-																	   TextWrapping="Wrap" TextAlignment="Center"
-																	   MaxWidth="140" MaxLines="2" TextTrimming="CharacterEllipsis"/>
-															<Border IsVisible="{Binding IsSelected}" CornerRadius="8"
-																	Background="{DynamicResource SystemAccentColor}" Padding="7,1"
-																	VerticalAlignment="Center">
-																<TextBlock Text="Selected" FontSize="10" Foreground="White"/>
-															</Border>
-															<Border IsVisible="{Binding HasPending}" CornerRadius="8"
-																	Background="#B8860B" Padding="7,1"
-																	VerticalAlignment="Center">
-																<TextBlock Text="Pending" FontSize="10" Foreground="White"/>
-															</Border>
-														</StackPanel>
-													</StackPanel>
-												</Button>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
-
-								</StackPanel>
-							</StackPanel>
-
 							<!-- Section: Packs (admins only) -->
 							<StackPanel Spacing="10" IsVisible="{Binding Upload.IsPacksSection}">
 								<TextBlock Text="Packs appear in Browse for everyone. Installing one adds its mods to the player's current profile."
@@ -999,6 +961,58 @@
 				</DockPanel>
 				</Panel>
 
+				<!-- Your mods tab (only reachable when the user has uploads) -->
+				<DockPanel IsVisible="{Binding IsMyModsTab}">
+					<TextBlock DockPanel.Dock="Top" Text="Your mods" FontSize="18" Margin="0,0,0,10"/>
+					<ScrollViewer>
+						<StackPanel Spacing="10">
+							<TextBlock Text="Click a mod to manage it." FontSize="12" Opacity="0.6"/>
+							<ItemsControl ItemsSource="{Binding Upload.MyMods}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel/>
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:MyModInfo">
+										<Button Width="196" Height="240" Margin="6" Padding="0"
+												HorizontalContentAlignment="Stretch"
+												VerticalContentAlignment="Stretch"
+												Command="{Binding $parent[Window].DataContext.Upload.SelectMyModCommand}"
+												CommandParameter="{Binding}">
+											<StackPanel Spacing="8" HorizontalAlignment="Center"
+														VerticalAlignment="Center">
+												<Border Width="172" Height="172" CornerRadius="14" ClipToBounds="True"
+														HorizontalAlignment="Center"
+														Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+													<Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+												</Border>
+												<StackPanel Orientation="Horizontal" Spacing="6"
+															HorizontalAlignment="Center">
+													<TextBlock Text="{Binding Name}" FontSize="{Binding CardNameFontSize}"
+															   FontWeight="Medium"
+															   TextWrapping="Wrap" TextAlignment="Center"
+															   MaxWidth="140" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+													<Border IsVisible="{Binding IsSelected}" CornerRadius="8"
+															Background="{DynamicResource SystemAccentColor}" Padding="7,1"
+															VerticalAlignment="Center">
+														<TextBlock Text="Selected" FontSize="10" Foreground="White"/>
+													</Border>
+													<Border IsVisible="{Binding HasPending}" CornerRadius="8"
+															Background="#B8860B" Padding="7,1"
+															VerticalAlignment="Center">
+														<TextBlock Text="Pending" FontSize="10" Foreground="White"/>
+													</Border>
+												</StackPanel>
+											</StackPanel>
+										</Button>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</ScrollViewer>
+				</DockPanel>
+
 			</Panel>
 		</DockPanel>
 
@@ -1066,6 +1080,37 @@
 							   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
 					<Button Content="Done" Classes="accent" HorizontalAlignment="Right"
 							Command="{Binding DismissLaunchOptionsPromptCommand}"/>
+				</StackPanel>
+			</Border>
+		</Panel>
+
+		<!-- Full uninstall confirmation -->
+		<Panel IsVisible="{Binding IsUninstallPromptVisible}">
+			<Border Background="#88000000"/>
+			<Border MaxWidth="600" HorizontalAlignment="Center" VerticalAlignment="Center"
+					Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+					CornerRadius="10" Padding="24"
+					BorderThickness="1"
+					BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+				<StackPanel Spacing="14">
+					<TextBlock Text="Uninstall Barnyard?" FontSize="16" FontWeight="Medium"/>
+					<TextBlock Text="Barnyard only: your installed mods keep working, but are no longer managed. Barnyard and all mods: every mod installed through Barnyard is removed as well. Either way, the game and BepInEx stay untouched, and you can delete the Barnyard folder itself afterwards."
+							   FontSize="13" TextWrapping="Wrap" Opacity="0.85"/>
+					<TextBlock Text="Uninstalling…" FontSize="12" Opacity="0.7"
+							   IsVisible="{Binding IsUninstalling}"/>
+					<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+						<Button Content="Cancel"
+								IsEnabled="{Binding IsUninstalling, Converter={x:Static BoolConverters.Not}}"
+								Command="{Binding DismissUninstallPromptCommand}"/>
+						<Button Content="Barnyard only"
+								IsEnabled="{Binding IsUninstalling, Converter={x:Static BoolConverters.Not}}"
+								Command="{Binding UninstallBarnyardCommand}"
+								CommandParameter="app"/>
+						<Button Content="Barnyard and all mods" Classes="danger"
+								IsEnabled="{Binding IsUninstalling, Converter={x:Static BoolConverters.Not}}"
+								Command="{Binding UninstallBarnyardCommand}"
+								CommandParameter="all"/>
+					</StackPanel>
 				</StackPanel>
 			</Border>
 		</Panel>
@@ -1271,33 +1316,40 @@
 				<TextBlock Text="Welcome to Barnyard" FontSize="44" FontWeight="Medium"
 						   HorizontalAlignment="Center"/>
 
-				<!-- Stage: loading -->
-				<StackPanel IsVisible="{Binding IsSetupLoading}" Spacing="16"
-							HorizontalAlignment="Center" Margin="0,12,0,0">
-					<ProgressBar IsIndeterminate="True" Width="340" Height="8"/>
-					<TextBlock Text="{Binding SetupStatus}" FontSize="19" Opacity="0.7"
-							   HorizontalAlignment="Center"/>
-				</StackPanel>
+				<!-- Loading and synced stages share a fixed-height slot so the
+				     logo and title never shift when the stage swaps. -->
+				<Panel Height="130" IsVisible="{Binding IsSetupLogoVisible}" Margin="0,12,0,0">
 
-				<!-- Stage: sync complete -->
-				<StackPanel IsVisible="{Binding IsSetupSynced}" Spacing="18"
-							HorizontalAlignment="Center" Margin="0,12,0,0">
-					<TextBlock Text="{Binding SetupSyncedText}" FontSize="21" Opacity="0.85"
-							   HorizontalAlignment="Center"/>
-					<Button Content="Continue" Classes="gold" Width="220" Height="52" FontSize="19"
-							HorizontalAlignment="Center"
-							Command="{Binding SetupContinueCommand}"/>
-				</StackPanel>
+					<!-- Stage: loading -->
+					<StackPanel IsVisible="{Binding IsSetupLoading}" Spacing="16"
+								HorizontalAlignment="Center" VerticalAlignment="Top">
+						<ProgressBar IsIndeterminate="True" Width="340" Height="8"/>
+						<TextBlock Text="{Binding SetupStatus}" FontSize="19" Opacity="0.7"
+								   HorizontalAlignment="Center"/>
+					</StackPanel>
+
+					<!-- Stage: sync complete -->
+					<StackPanel IsVisible="{Binding IsSetupSynced}" Spacing="18"
+								HorizontalAlignment="Center" VerticalAlignment="Top">
+						<TextBlock Text="{Binding SetupSyncedText}" FontSize="21" Opacity="0.85"
+								   HorizontalAlignment="Center"/>
+						<Button Content="Continue" Classes="gold" Width="220" Height="52" FontSize="19"
+								HorizontalAlignment="Center"
+								Command="{Binding SetupContinueCommand}"/>
+					</StackPanel>
+
+				</Panel>
 
 				<!-- Stage: what is Barnyard for? -->
 				<StackPanel IsVisible="{Binding IsSetupChoice}" Spacing="26"
-							HorizontalAlignment="Center" Margin="0,12,0,0">
+							HorizontalAlignment="Center" Margin="0,0,0,90">
 					<TextBlock Text="What do you want to use Barnyard for?" FontSize="26"
 							   HorizontalAlignment="Center"/>
-					<StackPanel Orientation="Horizontal" Spacing="34" HorizontalAlignment="Center">
-						<Button Width="280" Height="420" Padding="0" CornerRadius="12"
+					<StackPanel Orientation="Horizontal" Spacing="26" HorizontalAlignment="Center">
+						<Button Width="240" Height="360" Padding="0" CornerRadius="12"
 								Classes="setupCard"
-								Command="{Binding SetupChooseCompetitiveCommand}">
+								Command="{Binding SetupChoosePackCommand}"
+								CommandParameter="competitive">
 							<Panel>
 								<Border CornerRadius="12" ClipToBounds="True">
 									<Image Source="avares://Barnyard/Assets/competitive_play_icon.png"
@@ -1305,13 +1357,30 @@
 								</Border>
 								<Border VerticalAlignment="Bottom" Background="#B8000000"
 										CornerRadius="0,0,12,12" Padding="12,12">
-									<TextBlock Text="For Competitive Play" FontSize="21" Foreground="White"
+									<TextBlock Text="Competitive Play" FontSize="20" Foreground="White"
 											   HorizontalAlignment="Center" TextWrapping="Wrap"
 											   TextAlignment="Center"/>
 								</Border>
 							</Panel>
 						</Button>
-						<Button Width="280" Height="420" Padding="0" CornerRadius="12"
+						<Button Width="240" Height="360" Padding="0" CornerRadius="12"
+								Classes="setupCard"
+								Command="{Binding SetupChoosePackCommand}"
+								CommandParameter="casual">
+							<Panel>
+								<Border CornerRadius="12" ClipToBounds="True">
+									<Image Source="avares://Barnyard/Assets/casual_icon.png"
+										   Stretch="UniformToFill"/>
+								</Border>
+								<Border VerticalAlignment="Bottom" Background="#B8000000"
+										CornerRadius="0,0,12,12" Padding="12,12">
+									<TextBlock Text="Casual Play" FontSize="20" Foreground="White"
+											   HorizontalAlignment="Center" TextWrapping="Wrap"
+											   TextAlignment="Center"/>
+								</Border>
+							</Panel>
+						</Button>
+						<Button Width="240" Height="360" Padding="0" CornerRadius="12"
 								Classes="setupCard"
 								Command="{Binding SetupChooseOtherCommand}">
 							<Panel>
@@ -1321,7 +1390,7 @@
 								</Border>
 								<Border VerticalAlignment="Bottom" Background="#B8000000"
 										CornerRadius="0,0,12,12" Padding="12,12">
-									<TextBlock Text="Other" FontSize="21" Foreground="White"
+									<TextBlock Text="Other" FontSize="20" Foreground="White"
 											   HorizontalAlignment="Center"/>
 								</Border>
 							</Panel>
@@ -1329,19 +1398,19 @@
 					</StackPanel>
 				</StackPanel>
 
-				<!-- Stage: competitive pack offer -->
-				<StackPanel IsVisible="{Binding IsSetupCompetitive}" Spacing="24"
-							HorizontalAlignment="Center" Margin="0,12,0,0">
-					<TextBlock Text="Install the competitive mod pack?" FontSize="26"
+				<!-- Stage: mod pack offer (competitive or casual) -->
+				<StackPanel IsVisible="{Binding IsSetupPackOffer}" Spacing="24"
+							HorizontalAlignment="Center" Margin="0,0,0,90">
+					<TextBlock Text="{Binding SetupPackTitle}" FontSize="26"
 							   HorizontalAlignment="Center"/>
-					<TextBlock Text="It sets you up with the mods used for competitive play. You can add or remove mods at any time."
+					<TextBlock Text="{Binding SetupPackBody}"
 							   FontSize="17" Opacity="0.65" TextWrapping="Wrap" TextAlignment="Center"
 							   MaxWidth="500"/>
 					<StackPanel Orientation="Horizontal" Spacing="18" HorizontalAlignment="Center">
 						<Button Content="Install" Classes="gold" Width="200" Height="56" FontSize="20"
-								Command="{Binding SetupInstallCompetitiveCommand}"/>
+								Command="{Binding SetupInstallPackCommand}"/>
 						<Button Content="Skip" Width="200" Height="56" FontSize="20"
-								Command="{Binding SetupSkipCompetitiveCommand}"/>
+								Command="{Binding SetupSkipPackCommand}"/>
 					</StackPanel>
 				</StackPanel>
 

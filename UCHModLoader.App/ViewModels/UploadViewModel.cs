@@ -150,14 +150,12 @@ public partial class UploadViewModel : ObservableObject
     public bool SelectedMyModIsPrivate => SelectedMyMod?.IsPrivate ?? false;
 
     public bool IsUploadSection => SelectedSection == "Upload";
-    public bool IsMyModsSection => SelectedSection == "MyMods";
     public bool IsPacksSection => SelectedSection == "Packs";
     public bool IsReviewSection => SelectedSection == "Review";
 
     partial void OnSelectedSectionChanged(string value)
     {
         OnPropertyChanged(nameof(IsUploadSection));
-        OnPropertyChanged(nameof(IsMyModsSection));
         OnPropertyChanged(nameof(IsPacksSection));
         OnPropertyChanged(nameof(IsReviewSection));
         if (value == "Review") _ = LoadPendingAsync();
@@ -610,10 +608,26 @@ public partial class UploadViewModel : ObservableObject
     [RelayCommand]
     private void LogOut()
     {
+        // Revoke server-side too: without this the token in settings.json
+        // would stay valid until the next login rotates it.
+        var token = ApiToken;
+        if (!string.IsNullOrWhiteSpace(token)) _ = RevokeTokenAsync(token);
+
         ApiToken = "";
         _settings.ApiToken = "";
         _settings.Save();
         Status = "Logged out.";
+    }
+
+    private async Task RevokeTokenAsync(string token)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/auth/logout");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            await Http.SendAsync(request);
+        }
+        catch { /* offline logout still logs out locally */ }
     }
 
     [RelayCommand]

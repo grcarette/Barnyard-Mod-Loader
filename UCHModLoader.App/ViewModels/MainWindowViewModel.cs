@@ -76,11 +76,14 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _showLaunchOptionsAfterSetup;
 
     [ObservableProperty] private string _setupSyncedText = "";
+    [ObservableProperty] private string _setupPackTitle = "";
+    [ObservableProperty] private string _setupPackBody = "";
+    private string _setupPackKeyword = "";
 
     public bool IsSetupLoading => SetupStage == "Loading";
     public bool IsSetupSynced => SetupStage == "Synced";
     public bool IsSetupChoice => SetupStage == "Choice";
-    public bool IsSetupCompetitive => SetupStage == "Competitive";
+    public bool IsSetupPackOffer => SetupStage == "PackOffer";
     /// <summary>The logo only decorates the first (loading/synced) screen.</summary>
     public bool IsSetupLogoVisible => IsSetupLoading || IsSetupSynced;
 
@@ -89,7 +92,7 @@ public partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(IsSetupLoading));
         OnPropertyChanged(nameof(IsSetupSynced));
         OnPropertyChanged(nameof(IsSetupChoice));
-        OnPropertyChanged(nameof(IsSetupCompetitive));
+        OnPropertyChanged(nameof(IsSetupPackOffer));
         OnPropertyChanged(nameof(IsSetupLogoVisible));
     }
 
@@ -115,6 +118,7 @@ public partial class MainWindowViewModel : ObservableObject
     public bool IsBrowseTab => SelectedTab == "Browse";
     public bool IsSettingsTab => SelectedTab == "Settings";
     public bool IsUploadTab => SelectedTab == "Upload";
+    public bool IsMyModsTab => SelectedTab == "MyMods";
     public bool IsProfilesTab => SelectedTab == "Profiles";
     public bool HasPacks => Packs.Count > 0;
 
@@ -134,6 +138,7 @@ public partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(IsBrowseTab));
         OnPropertyChanged(nameof(IsSettingsTab));
         OnPropertyChanged(nameof(IsUploadTab));
+        OnPropertyChanged(nameof(IsMyModsTab));
         OnPropertyChanged(nameof(IsProfilesTab));
         OnPropertyChanged(nameof(IsBrowseGridVisible));
         OnPropertyChanged(nameof(IsBrowseDetailVisible));
@@ -221,6 +226,92 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void DismissLicense() => IsLicensePopupVisible = false;
 
+    // ── Full uninstall ───────────────────────────────────────────────────
+    /// <summary>Set when uninstall ran; the shutdown path must not re-save settings.</summary>
+    public static bool UninstallCompleted { get; private set; }
+
+    [ObservableProperty] private bool _isUninstallPromptVisible;
+    [ObservableProperty] private bool _isUninstalling;
+
+    [RelayCommand]
+    private void ShowUninstallPrompt() => IsUninstallPromptVisible = true;
+
+    [RelayCommand]
+    private void DismissUninstallPrompt() => IsUninstallPromptVisible = false;
+
+    /// <summary>scope: "all" removes the managed mods too; anything else keeps them.</summary>
+    [RelayCommand]
+    private async Task UninstallBarnyardAsync(string scope)
+    {
+        var removeMods = scope == "all";
+        IsUninstalling = true;
+        StatusMessage = "Uninstalling Barnyard…";
+        try
+        {
+            // 1) Remove every managed mod (full uninstall only). Dependencies
+            //    block their dependents' pass, so loop until no progress.
+            if (removeMods && _game is not null)
+            {
+                var folders = _installManager.GetInstalled()
+                    .Select(m => string.IsNullOrEmpty(m.FolderName)
+                        ? ModNaming.ToFolderName(m.Name, m.Id)
+                        : m.FolderName)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var progress = true;
+                while (progress)
+                {
+                    progress = false;
+                    foreach (var mod in _installManager.GetInstalled().ToList())
+                    {
+                        try
+                        {
+                            await _installManager.UninstallAsync(mod.Id, _game);
+                            progress = true;
+                        }
+                        catch { /* still required by a dependent — a later pass frees it */ }
+                    }
+                }
+
+                // 2) Sweep the leftover icon.png we cached into each mod folder
+                //    (it isn't part of the mod's recorded files).
+                foreach (var folder in folders)
+                {
+                    try
+                    {
+                        var root = Path.Combine(_game.PluginsDirectory, folder);
+                        if (!Directory.Exists(root)) continue;
+                        var icon = Path.Combine(root, "icon.png");
+                        if (File.Exists(icon)) File.Delete(icon);
+                        if (!Directory.EnumerateFileSystemEntries(root).Any())
+                            Directory.Delete(root);
+                    }
+                    catch { }
+                }
+            }
+
+            // 3) Delete Barnyard's data folder (settings, profiles, caches).
+            try
+            {
+                Directory.Delete(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "UCHModLoader"), recursive: true);
+            }
+            catch { }
+
+            UninstallCompleted = true;
+        }
+        finally
+        {
+            IsUninstalling = false;
+        }
+
+        if (Application.Current?.ApplicationLifetime
+            is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+            desktop.Shutdown();
+    }
+
     partial void OnShowOnlyUninstalledBrowseModsChanged(bool value)
     {
         OnPropertyChanged(nameof(BrowseViewButtonText));
@@ -253,6 +344,11 @@ public partial class MainWindowViewModel : ObservableObject
         Upload.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(UploadViewModel.Status)) ShowToast(Upload.Status);
+            // The "Your mods" tab only exists while there are uploads; leave
+            // it if it vanishes underneath us (e.g. logout).
+            if (e.PropertyName == nameof(UploadViewModel.HasMyMods) &&
+                !Upload.HasMyMods && SelectedTab == "MyMods")
+                SelectedTab = "Installed";
         };
         Upload.LocalInstallHandler = async (path, name, description) =>
         {
@@ -281,9 +377,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        // TESTING: always run setup, even if settings.json says it completed.
-        // Restore the check to make it first-run only:
-        // if (!_settings.SetupCompleted)
+        if (!_settings.SetupCompleted)
         {
             await RunFirstTimeSetupAsync();
             return;
@@ -295,9 +389,13 @@ public partial class MainWindowViewModel : ObservableObject
             IsBepInExPromptVisible = true;
 
         VerifyInstallations(silent: true);
+        // Pick up changes made in-game (Barnyard config manager).
+        if (_game is not null) _installManager.ReconcileEnabledFromDisk(_game);
+        ConsumePendingProfileSwitch();
 
         await RefreshIndexAsync();
         await LoadMyVotesAsync();
+        await EnsureDefaultModsInstalledAsync();
 
         // The profile is the desired state: install anything it lists that
         // isn't actually present (e.g. after a game reinstall).
@@ -325,6 +423,73 @@ public partial class MainWindowViewModel : ObservableObject
             StatusMessage = restored == 1
                 ? $"Restored 1 missing mod from profile '{ActiveProfileName}'"
                 : $"Restored {restored} missing mods from profile '{ActiveProfileName}'";
+    }
+
+    /// <summary>
+    /// The in-game Barnyard manager can't rewrite profiles.json safely, so a
+    /// profile switch made in-game is left as a pending note; consume it here.
+    /// (The dll renames were already applied in-game; ReconcileEnabledFromDisk
+    /// picks those up separately.)
+    /// </summary>
+    private void ConsumePendingProfileSwitch()
+    {
+        var pendingPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "UCHModLoader", "pending-active-profile.txt");
+        try
+        {
+            if (!File.Exists(pendingPath)) return;
+            var name = File.ReadAllText(pendingPath).Trim();
+            File.Delete(pendingPath);
+            if (name.Length > 0 && _profiles.NameExists(name))
+            {
+                _profiles.ActiveProfileName = name;
+                _profiles.Save();
+                StatusMessage = $"Profile switched in-game — now on '{name}'.";
+            }
+        }
+        catch { }
+    }
+
+    // Mods every Barnyard user must always have: the in-game config manager
+    // (its server-side dependency pulls in UCHSounds). Enforced — installed
+    // and enabled — at startup, after profile switches, and before launching
+    // the game, so the game can never run without it.
+    private static readonly string[] DefaultModIds = { "com.barnyard.manager" };
+
+    private async Task EnsureDefaultModsInstalledAsync()
+    {
+        if (_game is null || _index is null) return;
+
+        var changed = false;
+        foreach (var modId in DefaultModIds)
+        {
+            if (_index.Find(modId) is null) continue;   // not on the server yet
+            try
+            {
+                var existing = _installManager.GetInstalled().FirstOrDefault(m =>
+                    string.Equals(m.Id, modId, StringComparison.OrdinalIgnoreCase));
+                if (existing is null)
+                {
+                    var plan = _installManager.PlanInstall(modId, _index);
+                    await _installManager.ExecuteAsync(plan, _repository, _game);
+                    _installManager.SetEnabled(modId, true, _game);
+                    changed = true;
+                    StatusMessage = "Installed the in-game mod manager";
+                }
+                else if (!existing.Enabled)
+                {
+                    _installManager.SetEnabled(modId, true, _game);
+                    changed = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Could not install default mod '{modId}': {ex.Message}";
+            }
+        }
+
+        if (changed) SyncActiveProfileFromInstalled();
     }
 
     private void LocateGame()
@@ -372,8 +537,11 @@ public partial class MainWindowViewModel : ObservableObject
         SetupStatus = "Syncing mods…";
         await Task.Delay(500);
         VerifyInstallations(silent: true);
+        if (_game is not null) _installManager.ReconcileEnabledFromDisk(_game);
+        ConsumePendingProfileSwitch();
         await RefreshIndexAsync();
         await LoadMyVotesAsync();
+        await EnsureDefaultModsInstalledAsync();
 
         // Adopt mods the player installed by hand before Barnyard existed.
         if (_game is not null && _index is not null)
@@ -420,31 +588,36 @@ public partial class MainWindowViewModel : ObservableObject
     private Task SetupChooseOther() => FinishSetupAsync();
 
     [RelayCommand]
-    private void SetupChooseCompetitive() => SetupStage = "Competitive";
+    private void SetupChoosePack(string keyword)
+    {
+        _setupPackKeyword = keyword;
+        SetupPackTitle = $"Install the {keyword} mod pack?";
+        SetupPackBody = $"It sets you up with the mods used for {keyword} play. " +
+                        "You can add or remove mods at any time.";
+        SetupStage = "PackOffer";
+    }
 
     [RelayCommand]
-    private async Task SetupInstallCompetitiveAsync()
+    private async Task SetupInstallPackAsync()
     {
         var pack = Packs.FirstOrDefault(p =>
-            p.Name.Contains("competitive", StringComparison.OrdinalIgnoreCase));
+            p.Name.Contains(_setupPackKeyword, StringComparison.OrdinalIgnoreCase));
         if (pack is not null && _game is not null && _index is not null)
         {
             SetupStage = "Loading";
-            SetupStatus = "Installing the competitive mod pack…";
+            SetupStatus = $"Installing the {_setupPackKeyword} mod pack…";
             await InstallPackAsync(pack);
         }
         await FinishSetupAsync();
     }
 
     [RelayCommand]
-    private Task SetupSkipCompetitive() => FinishSetupAsync();
+    private Task SetupSkipPack() => FinishSetupAsync();
 
     private async Task FinishSetupAsync()
     {
-        // TESTING: setup runs on every launch. Restore these two lines to make
-        // it first-run only.
-        // _settings.SetupCompleted = true;
-        // _settings.Save();
+        _settings.SetupCompleted = true;
+        _settings.Save();
         SetupOpacity = 0;           // fades via the panel's opacity transition
         await Task.Delay(500);
         IsSetupVisible = false;
@@ -575,6 +748,7 @@ public partial class MainWindowViewModel : ObservableObject
                 LatestRevision = entry?.Latest()?.Revision ?? 0,
                 IsEnabled = mod.Enabled,
                 IsLockedDependency = _installManager.GetDependents(mod.Id).Count > 0,
+                IsUninstallAllowed = !DefaultModIds.Contains(mod.Id, StringComparer.OrdinalIgnoreCase),
                 IconUrl = entry?.IconUrl,
                 IconVersion = entry?.IconVersion,
                 Entry = entry,
@@ -622,6 +796,7 @@ public partial class MainWindowViewModel : ObservableObject
                     LatestVersion = entry.Latest()?.Version ?? "",
                     LatestRevision = entry.Latest()?.Revision ?? 0,
                     Downloads = entry.Downloads,
+                    IsUninstallAllowed = !DefaultModIds.Contains(entry.Id, StringComparer.OrdinalIgnoreCase),
                     IsPrivate = entry.IsPrivate,
                     AuthorVerified = entry.AuthorVerified,
                     Upvotes = entry.Upvotes,
@@ -634,6 +809,14 @@ public partial class MainWindowViewModel : ObservableObject
                 });
             }
         }
+
+        // Dim pack rows for mods that are already in the ACTIVE profile —
+        // membership in the profile is what matters, not mere installation
+        // (a mod installed for another profile still reads as "new" here).
+        var activeProfileIds = new HashSet<string>(
+            _profiles.Active.EnabledModIds, StringComparer.OrdinalIgnoreCase);
+        foreach (var packRow in Packs.SelectMany(p => p.Mods))
+            packRow.PackRowOpacity = activeProfileIds.Contains(packRow.Id) ? 0.45 : 1.0;
 
         // Keep the open details page bound to the freshly built row for the same mod.
         if (openModId is not null)
@@ -704,7 +887,13 @@ public partial class MainWindowViewModel : ObservableObject
         IEnumerable<ModRowViewModel> mods = AvailableMods.Where(m => !m.IsPrivate);
 
         if (ShowOnlyUninstalledBrowseMods)
-            mods = mods.Where(m => !m.IsInstalled);
+        {
+            // "Uninstalled" is relative to the ACTIVE profile: a mod installed
+            // for a different profile still shows here.
+            var profileIds = new HashSet<string>(
+                _profiles.Active.EnabledModIds, StringComparer.OrdinalIgnoreCase);
+            mods = mods.Where(m => !profileIds.Contains(m.Id));
+        }
 
         if (!string.IsNullOrWhiteSpace(BrowseSearchText))
         {
@@ -742,6 +931,39 @@ public partial class MainWindowViewModel : ObservableObject
         foreach (var pack in Packs.Where(p => p.Icon is null && !string.IsNullOrEmpty(p.IconUrl)).ToList())
         {
             pack.Icon = await _iconCache.GetAsync($"pack-{pack.Id}", pack.IconVersion, pack.IconUrl);
+        }
+
+        SyncIconsToModFolders();
+    }
+
+    /// <summary>
+    /// Mirrors each installed mod's cached icon into its plugin folder as
+    /// icon.png, so in-game tools (the Barnyard config manager) can show it.
+    /// </summary>
+    private void SyncIconsToModFolders()
+    {
+        if (_game is null) return;
+        foreach (var mod in _installManager.GetInstalled())
+        {
+            var entry = _index?.Find(mod.Id);
+            if (string.IsNullOrEmpty(entry?.IconUrl)) continue;
+            var cached = _iconCache.TryGetCachedPath(mod.Id, entry!.IconVersion);
+            if (cached is null) continue;
+
+            var folderName = string.IsNullOrEmpty(mod.FolderName)
+                ? ModNaming.ToFolderName(mod.Name, mod.Id)
+                : mod.FolderName;
+            var modRoot = Path.Combine(_game.PluginsDirectory, folderName);
+            if (!Directory.Exists(modRoot)) continue;
+
+            var destination = Path.Combine(modRoot, "icon.png");
+            try
+            {
+                if (!File.Exists(destination) ||
+                    new FileInfo(destination).Length != new FileInfo(cached).Length)
+                    File.Copy(cached, destination, overwrite: true);
+            }
+            catch { /* a locked or read-only folder just misses its icon */ }
         }
     }
 
@@ -1021,7 +1243,9 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void CreateProfile()
     {
-        var name = NewProfileName.Trim();
+        // Control characters (tabs, newlines) would corrupt the profiles.txt
+        // mirror the in-game manager parses.
+        var name = new string(NewProfileName.Where(c => !char.IsControl(c)).ToArray()).Trim();
         if (name.Length == 0) { StatusMessage = "Profile name is required."; return; }
         if (name.Length > 40) { StatusMessage = "Profile name must be 40 characters or fewer."; return; }
         if (_profiles.NameExists(name)) { StatusMessage = $"A profile named '{name}' already exists."; return; }
@@ -1060,6 +1284,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         var restored = await EnsureProfileModsInstalledAsync(profile);
         ApplyProfile(profile);
+        // Default mods stay enabled regardless of the profile's own list.
+        await EnsureDefaultModsInstalledAsync();
         _profiles.Save();
         RefreshLists();
         RefreshProfileRows();
@@ -1330,6 +1556,9 @@ public partial class MainWindowViewModel : ObservableObject
         // before every launch so it always holds.
         try { _bepInEx.SetConsoleEnabled(_game!, ShowBepInExConsole); } catch { }
 
+        // The in-game manager must always ride along.
+        await EnsureDefaultModsInstalledAsync();
+
         var broken = VerifyInstallations(silent: false);
 
         var restored = 0;
@@ -1392,6 +1621,11 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task UninstallModAsync(ModRowViewModel row)
     {
         if (_game is null) return;
+        if (!row.IsUninstallAllowed)
+        {
+            StatusMessage = $"{row.Name} is part of Barnyard and can't be uninstalled.";
+            return;
+        }
         try
         {
             await _installManager.UninstallAsync(row.Id, _game);

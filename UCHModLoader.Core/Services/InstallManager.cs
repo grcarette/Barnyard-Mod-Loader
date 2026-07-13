@@ -51,6 +51,38 @@ public sealed class InstallManager : IInstallManager
         return new InstallVerificationResult(missing, partial);
     }
 
+    /// <summary>
+    /// Syncs each mod's Enabled flag from file reality (dll vs dll.disabled),
+    /// so enable/disable changes made outside the loader — e.g. by the
+    /// in-game Barnyard config manager — are respected instead of overwritten.
+    /// </summary>
+    public void ReconcileEnabledFromDisk(GameInstall game)
+    {
+        var changed = false;
+        foreach (var mod in _installed)
+        {
+            bool? enabledOnDisk = null;
+            foreach (var relative in mod.RelativeFiles.Where(f =>
+                f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+                f.EndsWith(".dll.disabled", StringComparison.OrdinalIgnoreCase)))
+            {
+                var basePath = Path.Combine(game.GameDirectory,
+                    relative.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                        ? relative[..^".disabled".Length]
+                        : relative);
+                if (File.Exists(basePath)) { enabledOnDisk = true; break; }
+                if (File.Exists(basePath + ".disabled")) enabledOnDisk ??= false;
+            }
+
+            if (enabledOnDisk is bool state && mod.Enabled != state)
+            {
+                mod.Enabled = state;
+                changed = true;
+            }
+        }
+        if (changed) SaveState();
+    }
+
     public IReadOnlyList<string> GetDependents(string modId) =>
         _installed
             .Where(m => m.Dependencies.Keys.Contains(modId, StringComparer.OrdinalIgnoreCase))
@@ -240,13 +272,19 @@ public sealed class InstallManager : IInstallManager
         Directory.CreateDirectory(modRoot);
 
         var files = new List<string>();
+        // Trailing separator matters: without it, "plugins\Foo" would also
+        // match "plugins\FooBar\...", letting a crafted entry escape into a
+        // sibling folder that shares a name prefix.
+        var rootPrefix = Path.GetFullPath(modRoot)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
         using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
         foreach (var entry in archive.Entries)
         {
             if (string.IsNullOrEmpty(entry.Name)) continue;
 
             var destination = Path.GetFullPath(Path.Combine(modRoot, entry.FullName));
-            if (!destination.StartsWith(Path.GetFullPath(modRoot), StringComparison.OrdinalIgnoreCase))
+            if (!destination.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException($"Zip entry '{entry.FullName}' escapes the mod folder.");
 
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
@@ -389,19 +427,34 @@ public sealed class InstallManager : IInstallManager
             string.Equals(m.Id, modId, StringComparison.OrdinalIgnoreCase));
         if (mod is null) return Task.CompletedTask;
 
+        // Older installs (pre display-name folders) recorded no FolderName;
+        // fall back to the GUID folder for those.
+        var folderName = string.IsNullOrEmpty(mod.FolderName)
+            ? ModNaming.ToFolderName(mod.Name, mod.Id)
+            : mod.FolderName;
+
+        // Containment guard: deletion may only ever touch files inside THIS
+        // mod's own folder under BepInEx/plugins. Even if the install state
+        // is corrupted and lists foreign paths, other mods' files (and
+        // anything else in the game folder) are never deleted.
+        var allowedRoots = new[] { folderName, mod.Id }
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(c => Path.GetFullPath(Path.Combine(game.PluginsDirectory, c))
+                         + Path.DirectorySeparatorChar)
+            .ToArray();
+
         foreach (var relative in mod.RelativeFiles)
         {
-            var path = Path.Combine(game.GameDirectory, relative);
+            var path = Path.GetFullPath(Path.Combine(game.GameDirectory, relative));
+            if (!allowedRoots.Any(root => path.StartsWith(root, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
             if (File.Exists(path)) File.Delete(path);
             var disabled = path + ".disabled";
             if (File.Exists(disabled)) File.Delete(disabled);
         }
 
-        // Remove the mod's folder if it's now empty. Older installs (pre display-name
-        // folders) recorded no FolderName; fall back to the GUID folder for those.
-        var folderName = string.IsNullOrEmpty(mod.FolderName)
-            ? ModNaming.ToFolderName(mod.Name, mod.Id)
-            : mod.FolderName;
+        // Remove the mod's folder if it's now empty.
         foreach (var candidate in new[] { folderName, mod.Id }.Distinct())
         {
             var modRoot = Path.Combine(game.PluginsDirectory, candidate);

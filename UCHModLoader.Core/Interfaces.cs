@@ -40,6 +40,11 @@ public interface IInstallManager
     /// reinstalled from Browse).
     /// </summary>
     InstallVerificationResult VerifyInstalls(GameInstall game, bool removeBroken = true);
+    /// <summary>
+    /// Syncs Enabled flags from file reality (dll vs dll.disabled), picking up
+    /// changes made outside the loader (e.g. the in-game config manager).
+    /// </summary>
+    void ReconcileEnabledFromDisk(GameInstall game);
     IReadOnlyList<string> GetDependents(string modId);
     /// <summary>
     /// Plans an install of the latest revision, or a specific revision when

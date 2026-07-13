@@ -66,6 +66,22 @@ public sealed class ProfileService
         File.WriteAllText(_path, JsonSerializer.Serialize(
             new StoredProfiles { Profiles = Profiles, ActiveProfileName = ActiveProfileName },
             JsonOptions));
+
+        // Plain-text mirror for the in-game Barnyard config manager (Unity's
+        // JsonUtility can't reliably parse this JSON). Line 1 = active profile
+        // name; then one line per profile: name <tab> comma-joined mod ids.
+        try
+        {
+            // Defense in depth: strip control characters so no name (however
+            // it got in) can break the line/tab format.
+            static string Clean(string s) => new(s.Where(c => !char.IsControl(c)).ToArray());
+            var mirror = Path.Combine(Path.GetDirectoryName(_path)!, "profiles.txt");
+            var lines = new List<string> { Clean(ActiveProfileName) };
+            lines.AddRange(Profiles.Select(p =>
+                Clean(p.Name) + "\t" + string.Join(",", p.EnabledModIds)));
+            File.WriteAllLines(mirror, lines);
+        }
+        catch { /* the mirror is best-effort */ }
     }
 
     private sealed class StoredProfiles

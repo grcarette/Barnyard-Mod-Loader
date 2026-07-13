@@ -57,6 +57,14 @@ public sealed class IconCache
         }
     }
 
+    /// <summary>Path of the cached icon file for this mod+version, or null if not cached yet.</summary>
+    public string? TryGetCachedPath(string modId, string? iconVersion)
+    {
+        var version = string.IsNullOrEmpty(iconVersion) ? "0" : iconVersion;
+        var cachePath = Path.Combine(_cacheDirectory, $"{SafeKey(modId)}-{SafeKey(version)}.png");
+        return File.Exists(cachePath) ? cachePath : null;
+    }
+
     private void PruneOldVersions(string modId, string keepPath)
     {
         try

@@ -35,27 +35,41 @@ var publicBaseUrl = (app.Configuration["PublicBaseUrl"] ?? "http://localhost:517
         });
 }
 
-// Upload rate limiting: sliding one-hour window per user, in memory.
-var uploadTimestamps = new ConcurrentDictionary<string, Queue<DateTime>>();
-bool AllowUpload(string discordId, int maxPerHour = 10)
+// Strict Authorization-header parsing: exactly "Bearer <token>" or nothing.
+static string? BearerToken(HttpRequest request)
 {
-    var queue = uploadTimestamps.GetOrAdd(discordId, _ => new Queue<DateTime>());
+    var header = request.Headers.Authorization.ToString();
+    return header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+        ? header["Bearer ".Length..].Trim()
+        : null;
+}
+
+// Rate limiting: sliding window per action+user, in memory (single instance).
+var actionTimestamps = new ConcurrentDictionary<string, Queue<DateTime>>();
+bool AllowAction(string key, int max, TimeSpan window)
+{
+    var queue = actionTimestamps.GetOrAdd(key, _ => new Queue<DateTime>());
     lock (queue)
     {
-        var cutoff = DateTime.UtcNow.AddHours(-1);
+        var cutoff = DateTime.UtcNow - window;
         while (queue.Count > 0 && queue.Peek() < cutoff) queue.Dequeue();
-        if (queue.Count >= maxPerHour) return false;
+        if (queue.Count >= max) return false;
         queue.Enqueue(DateTime.UtcNow);
         return true;
     }
 }
+bool AllowUpload(string discordId) => AllowAction("upload:" + discordId, 10, TimeSpan.FromHours(1));
+
+// OAuth state: server-issued nonces (carrying the loader's loopback port)
+// that the callback must present, so a login can't be forged or replayed.
+var oauthStates = new ConcurrentDictionary<string, (string Port, DateTime Expires)>();
 
 // ---------- Index ----------
 app.MapGet("/api/index", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
     // Identity is optional here: anonymous callers get public mods; a valid
     // token additionally reveals private mods the caller may access.
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
     var isAdmin = user is not null && admins.Contains(user.DiscordId);
@@ -137,7 +151,7 @@ app.MapGet("/api/packs", async (MongoContext db) =>
 // Admin-only: create a pack.
 app.MapPost("/api/packs", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -207,7 +221,7 @@ app.MapGet("/api/packicon/{packId}", async (string packId, MongoContext db) =>
 app.MapPost("/api/packs/{packId}/icon", async (string packId, HttpRequest request,
     IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -269,7 +283,7 @@ app.MapGet("/api/download/{modId}/rev/{revision:int}", async (string modId, int 
 
     if (mod!.IsPrivate)
     {
-        var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var token = BearerToken(request);
         var user = await db.UserFromTokenAsync(token);
         var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
         var allowed = user is not null &&
@@ -294,7 +308,7 @@ app.MapGet("/api/download/{modId}/{version}", async (string modId, string versio
 
     if (mod!.IsPrivate)
     {
-        var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var token = BearerToken(request);
         var user = await db.UserFromTokenAsync(token);
         var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
         var allowed = user is not null &&
@@ -316,11 +330,14 @@ app.MapGet("/api/download/{modId}/{version}", async (string modId, string versio
 app.MapPost("/api/mods/{modId}/generatekey", async (string modId, HttpRequest request,
     IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
+
+    if (!AllowAction("genkey:" + user.DiscordId, 30, TimeSpan.FromHours(1)))
+        return Results.BadRequest("Too many keys generated — try again later.");
 
     var mod = await db.Mods.Find(m => m.ModId == modId).FirstOrDefaultAsync();
     if (mod is null) return Results.NotFound();
@@ -356,9 +373,12 @@ app.MapPost("/api/mods/{modId}/generatekey", async (string modId, HttpRequest re
 
 app.MapPost("/api/mods/redeemkey", async (HttpRequest request, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
+
+    if (!AllowAction("redeem:" + user.DiscordId, 10, TimeSpan.FromMinutes(1)))
+        return Results.BadRequest("Too many attempts — try again in a minute.");
 
     if (!request.HasFormContentType) return Results.BadRequest("Expected form data.");
     var form = await request.ReadFormAsync();
@@ -400,7 +420,7 @@ app.MapPost("/api/mods/redeemkey", async (HttpRequest request, MongoContext db) 
 // ---------- Review (admin) ----------
 app.MapGet("/api/admin/pending", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
     if (user is null || !admins.Contains(user.DiscordId)) return Results.Unauthorized();
@@ -426,7 +446,7 @@ app.MapGet("/api/admin/pending", async (HttpRequest request, IConfiguration conf
 
 app.MapPost("/api/admin/approve", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
     if (user is null || !admins.Contains(user.DiscordId)) return Results.Unauthorized();
@@ -460,7 +480,7 @@ app.MapPost("/api/admin/approve", async (HttpRequest request, IConfiguration con
 
 app.MapPost("/api/admin/reject", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
     if (user is null || !admins.Contains(user.DiscordId)) return Results.Unauthorized();
@@ -496,7 +516,7 @@ app.MapPost("/api/admin/reject", async (HttpRequest request, IConfiguration conf
 
 app.MapPost("/api/admin/verify", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
     if (user is null || !admins.Contains(user.DiscordId)) return Results.Unauthorized();
@@ -515,7 +535,7 @@ app.MapPost("/api/admin/verify", async (HttpRequest request, IConfiguration conf
 // ---------- Reporting ----------
 app.MapPost("/api/mods/{modId}/report", async (string modId, HttpRequest request, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -525,8 +545,15 @@ app.MapPost("/api/mods/{modId}/report", async (string modId, HttpRequest request
     if (reason.Length == 0) return Results.BadRequest("A reason is required.");
     if (reason.Length > 500) reason = reason[..500];
 
+    if (!AllowAction("report:" + user.DiscordId, 5, TimeSpan.FromHours(1)))
+        return Results.BadRequest("Too many reports — try again later.");
+
     var mod = await db.Mods.Find(m => m.ModId == modId).FirstOrDefaultAsync();
     if (mod is null) return Results.NotFound();
+
+    // One report per user per mod: repeat reports can't crowd out others'.
+    if (mod.Reports.Any(r => r.ReporterDiscordId == user.DiscordId))
+        return Results.Json(new { modId, reported = true });
     if (mod.Reports.Count >= 100)
         return Results.Json(new { modId, reported = true }); // cap; silently accept
 
@@ -544,9 +571,12 @@ app.MapPost("/api/mods/{modId}/report", async (string modId, HttpRequest request
 // ---------- Voting ----------
 app.MapPost("/api/mods/{modId}/vote", async (string modId, HttpRequest request, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
+
+    if (!AllowAction("vote:" + user.DiscordId, 30, TimeSpan.FromMinutes(1)))
+        return Results.BadRequest("Too many votes — slow down.");
 
     var mod = await db.Mods.Find(m => m.ModId == modId && !m.Hidden).FirstOrDefaultAsync();
     if (mod is null) return Results.NotFound();
@@ -563,7 +593,7 @@ app.MapPost("/api/mods/{modId}/vote", async (string modId, HttpRequest request, 
 
 app.MapGet("/api/votes/mine", async (HttpRequest request, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -583,17 +613,32 @@ app.MapGet("/api/icon/{modId}", async (string modId, MongoContext db) =>
 // ---------- Discord OAuth ----------
 app.MapGet("/api/auth/discord/login", (IConfiguration config, string? port) =>
 {
+    // Issue a nonce the callback must return; the loader's loopback port
+    // rides inside it server-side instead of in the raw state value.
+    foreach (var stale in oauthStates.Where(kv => kv.Value.Expires < DateTime.UtcNow).ToList())
+        oauthStates.TryRemove(stale.Key, out _);
+    var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
+    oauthStates[nonce] = (port ?? "", DateTime.UtcNow.AddMinutes(10));
+
     var clientId = config["Discord:ClientId"];
     var redirect = Uri.EscapeDataString($"{publicBaseUrl}/api/auth/discord/callback");
-    var state = string.IsNullOrEmpty(port) ? "" : $"&state={Uri.EscapeDataString(port)}";
     return Results.Redirect(
         $"https://discord.com/oauth2/authorize?client_id={clientId}&response_type=code" +
-        $"&redirect_uri={redirect}&scope=identify{state}");
+        $"&redirect_uri={redirect}&scope=identify&state={nonce}");
 });
 
 app.MapGet("/api/auth/discord/callback", async (string code, string? state, IConfiguration config,
     IHttpClientFactory httpFactory, MongoContext db) =>
 {
+    // The state must be a nonce we issued (single use, 10-minute lifetime).
+    if (state is null || !oauthStates.TryRemove(state, out var stateEntry) ||
+        stateEntry.Expires < DateTime.UtcNow)
+    {
+        return Results.Content(
+            "Login session is invalid or expired — start the login again from the loader.",
+            "text/plain");
+    }
+
     var http = httpFactory.CreateClient();
 
     var tokenResponse = await http.PostAsync("https://discord.com/api/oauth2/token",
@@ -637,8 +682,8 @@ app.MapGet("/api/auth/discord/callback", async (string code, string? state, ICon
             .SetOnInsert(u => u.CreatedUtc, DateTime.UtcNow),
         new UpdateOptions { IsUpsert = true });
 
-    // Loopback flow: the loader passed its local listener port via OAuth state.
-    if (int.TryParse(state, out var loaderPort) && loaderPort is > 1023 and < 65536)
+    // Loopback flow: the loader's local listener port rode inside the nonce.
+    if (int.TryParse(stateEntry.Port, out var loaderPort) && loaderPort is > 1023 and < 65536)
         return Results.Redirect($"http://127.0.0.1:{loaderPort}/?token={apiToken}");
 
     // Fallback for logins started outside the loader: show the token to copy.
@@ -653,10 +698,22 @@ app.MapGet("/api/auth/discord/callback", async (string code, string? state, ICon
     return Results.Content(html, "text/html");
 });
 
+// ---------- Logout: revoke the token server-side ----------
+app.MapPost("/api/auth/logout", async (HttpRequest request, MongoContext db) =>
+{
+    var token = BearerToken(request);
+    var user = await db.UserFromTokenAsync(token);
+    if (user is null) return Results.Unauthorized();
+
+    await db.Users.UpdateOneAsync(u => u.DiscordId == user.DiscordId,
+        Builders<UserDoc>.Update.Set(u => u.ApiToken, ""));
+    return Results.Json(new { loggedOut = true });
+});
+
 // ---------- Current user ----------
 app.MapGet("/api/auth/me", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
     var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
@@ -671,7 +728,7 @@ app.MapGet("/api/auth/me", async (HttpRequest request, IConfiguration config, Mo
 // ---------- My mods ----------
 app.MapGet("/api/mods/mine", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -697,7 +754,7 @@ app.MapGet("/api/mods/mine", async (HttpRequest request, IConfiguration config, 
 app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest request,
     IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 
@@ -835,7 +892,7 @@ app.MapPost("/api/mods/{modId}/details", async (string modId, HttpRequest reques
 // ---------- Upload (new mod, or update with replacement) ----------
 app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration config, MongoContext db) =>
 {
-    var token = request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    var token = BearerToken(request);
     var user = await db.UserFromTokenAsync(token);
     if (user is null) return Results.Unauthorized();
 

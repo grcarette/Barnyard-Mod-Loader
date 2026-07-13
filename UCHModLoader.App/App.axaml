@@ -16,10 +16,22 @@
           <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#3E3E45</SolidColorBrush>
           <SolidColorBrush x:Key="ButtonBackgroundPressed">#2C2C31</SolidColorBrush>
           <SolidColorBrush x:Key="TabSelectedBrush">#17171A</SolidColorBrush>
+          <!-- Row hover: solid on the left, fading out before the row's
+               right-side controls (toggles, buttons). -->
+          <LinearGradientBrush x:Key="RowHoverBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+            <GradientStop Color="#3E3E45" Offset="0"/>
+            <GradientStop Color="#3E3E45" Offset="0.88"/>
+            <GradientStop Color="#003E3E45" Offset="1"/>
+          </LinearGradientBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
           <SolidColorBrush x:Key="AppBackgroundBrush">#ECECEA</SolidColorBrush>
           <SolidColorBrush x:Key="TabSelectedBrush">#D2D2CE</SolidColorBrush>
+          <LinearGradientBrush x:Key="RowHoverBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+            <GradientStop Color="#DDDDD9" Offset="0"/>
+            <GradientStop Color="#DDDDD9" Offset="0.88"/>
+            <GradientStop Color="#00DDDDD9" Offset="1"/>
+          </LinearGradientBrush>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
@@ -84,6 +96,15 @@
     <Style Selector="Button.setupCard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="BorderBrush" Value="#E0A526"/>
       <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+
+    <!-- List-row hover: gradient highlight fading out toward the row's
+         right-side controls. -->
+    <Style Selector="Button.rowHover:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
+    </Style>
+    <Style Selector="Button.rowHover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
     </Style>
 
     <!-- Sidebar tab buttons: the active tab reads darker. -->

@@ -9,11 +9,12 @@ public sealed class BepInExManager : IBepInExManager
     // BepInEx 5.x (Mono) — the correct line for Ultimate Chicken Horse.
     // Pinned so installs are reproducible; bump deliberately when upgrading.
     private const string WindowsUrl =
-        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_win_x64_5.4.23.2.zip";
+        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_win_x64_5.4.23.5.zip";
     private const string LinuxUrl =
-        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_linux_x64_5.4.23.2.zip";
+        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_linux_x64_5.4.23.5.zip";
+    // 5.4.23.5 ships a single universal macOS package (x64 + arm64).
     private const string MacUrl =
-        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_macos_x64_5.4.23.2.zip";
+        "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_macos_universal_5.4.23.5.zip";
 
     private readonly HttpClient _http;
 
