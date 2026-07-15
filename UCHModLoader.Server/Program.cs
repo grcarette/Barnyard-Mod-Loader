@@ -1203,4 +1203,55 @@ app.MapPost("/api/mods/upload", async (HttpRequest request, IConfiguration confi
     });
 });
 
+// ---------- Telemetry (playtest data collection) ----------
+// The training mod posts its whole telemetry.json here. It runs IN-GAME with no user
+// token, so this is anonymous: the body carries the mod's own anonymous player id, and
+// we upsert on it (last write wins). Rate-limited per player as a backstop.
+app.MapPost("/api/telemetry", async (HttpRequest request, MongoContext db) =>
+{
+    using var reader = new StreamReader(request.Body);
+    var json = await reader.ReadToEndAsync();
+    if (string.IsNullOrWhiteSpace(json) || json.Length > 2_000_000)
+        return Results.BadRequest("Empty or oversized telemetry.");
+
+    BsonDocument data;
+    try { data = BsonDocument.Parse(json); }
+    catch { return Results.BadRequest("Body must be JSON."); }
+
+    var playerId = data.TryGetValue("playerId", out var pid) && pid.IsString ? pid.AsString : "";
+    if (string.IsNullOrWhiteSpace(playerId) || playerId.Length > 64)
+        return Results.BadRequest("Missing playerId.");
+
+    if (!AllowAction("telemetry:" + playerId, 60, TimeSpan.FromHours(1)))
+        return Results.StatusCode(429);
+
+    await db.Telemetry.UpdateOneAsync(
+        Builders<TelemetryDoc>.Filter.Eq(t => t.PlayerId, playerId),
+        Builders<TelemetryDoc>.Update
+            .Set(t => t.PlayerId, playerId)
+            .Set(t => t.ModVersion, data.TryGetValue("modVersion", out var mv) && mv.IsString ? mv.AsString : "")
+            .Set(t => t.AbReminders, data.TryGetValue("abReminders", out var ab) && ab.ToBoolean())
+            .Set(t => t.SessionCount, data.TryGetValue("sessionCount", out var sc) ? sc.ToInt32() : 0)
+            .Set(t => t.UpdatedUtc, DateTime.UtcNow)
+            .Set(t => t.Data, data),
+        new UpdateOptions { IsUpsert = true });
+
+    return Results.Json(new { ok = true });
+});
+
+// Admin-only: export every telemetry doc as one JSON array (relaxed JSON, ready to analyse).
+app.MapGet("/api/admin/telemetry", async (HttpRequest request, IConfiguration config, MongoContext db) =>
+{
+    var token = BearerToken(request);
+    var user = await db.UserFromTokenAsync(token);
+    var admins = config.GetSection("Admin:DiscordIds").Get<string[]>() ?? Array.Empty<string>();
+    if (user is null || !admins.Contains(user.DiscordId)) return Results.Unauthorized();
+
+    var all = await db.Telemetry.Find(_ => true).ToListAsync();
+    var arr = new BsonArray(all.Select(t => t.Data));
+    var settings = new MongoDB.Bson.IO.JsonWriterSettings
+    { OutputMode = MongoDB.Bson.IO.JsonOutputMode.RelaxedExtendedJson };
+    return Results.Content(arr.ToJson(settings), "application/json");
+});
+
 app.Run();

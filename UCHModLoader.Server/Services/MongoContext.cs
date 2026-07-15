@@ -9,6 +9,7 @@ public sealed class MongoContext
     public IMongoCollection<UserDoc> Users { get; }
     public IMongoCollection<ModDoc> Mods { get; }
     public IMongoCollection<PackDoc> Packs { get; }
+    public IMongoCollection<TelemetryDoc> Telemetry { get; }
     public GridFSBucket Files { get; }
 
     public MongoContext(IConfiguration config)
@@ -18,6 +19,7 @@ public sealed class MongoContext
         Users = db.GetCollection<UserDoc>("users");
         Mods = db.GetCollection<ModDoc>("mods");
         Packs = db.GetCollection<PackDoc>("packs");
+        Telemetry = db.GetCollection<TelemetryDoc>("telemetry");
         Files = new GridFSBucket(db);
 
         Users.Indexes.CreateOne(new CreateIndexModel<UserDoc>(
@@ -25,6 +27,9 @@ public sealed class MongoContext
             new CreateIndexOptions { Unique = true }));
         Mods.Indexes.CreateOne(new CreateIndexModel<ModDoc>(
             Builders<ModDoc>.IndexKeys.Ascending(m => m.ModId),
+            new CreateIndexOptions { Unique = true }));
+        Telemetry.Indexes.CreateOne(new CreateIndexModel<TelemetryDoc>(
+            Builders<TelemetryDoc>.IndexKeys.Ascending(t => t.PlayerId),
             new CreateIndexOptions { Unique = true }));
     }
 

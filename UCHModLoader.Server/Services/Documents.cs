@@ -59,6 +59,20 @@ public sealed class ModVersionDoc
     public DateTime UploadedUtc { get; set; }
 }
 
+// One playtester's telemetry, keyed by the mod's ANONYMOUS player id (no Discord link).
+// The mod posts its whole telemetry.json; Data holds it verbatim, with a few fields lifted
+// out for easy querying. Upserted on PlayerId — last write wins.
+public sealed class TelemetryDoc
+{
+    [BsonId] public ObjectId Id { get; set; }
+    public string PlayerId { get; set; } = "";
+    public string ModVersion { get; set; } = "";
+    public bool AbReminders { get; set; }     // A/B bucket: reminders on/off
+    public int SessionCount { get; set; }
+    public DateTime UpdatedUtc { get; set; }
+    public BsonDocument Data { get; set; } = new();   // the raw telemetry.json
+}
+
 public sealed class MultiUseKey
 {
     public string Key { get; set; } = "";
